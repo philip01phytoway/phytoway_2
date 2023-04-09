@@ -35,7 +35,7 @@ class calling():
         self.result_col = ['날짜', '키워드', 'PC검색량', '모바일검색량', '총검색량', 'query']
         self.upload_sheet_url = 'https://docs.google.com/spreadsheets/d/13Wqg7dyVPPvN8CHix8qEJcRgkDTlHm7rLOpyuJvkJYo/edit#gid=0' # 콜링 수집 자동화 시트
         self.scope = ['https://spreadsheets.google.com/feeds']
-        self.json_file_name = 'C:/phytoway/코드/python/데이터수집/datacollectautomation-9936acf9ca4a.json'
+        self.json_file_name = 'C:/phytoway_2/코드/python/데이터수집/datacollectautomation-04543e89aa13.json'
         self.credentials = ServiceAccountCredentials.from_json_keyfile_name(self.json_file_name, self.scope)
 
 
