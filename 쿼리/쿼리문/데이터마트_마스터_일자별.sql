@@ -84,7 +84,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yymmdd between '2023-03-29' AND '2023-04-04'
+where	yymmdd between '2023-04-05' AND '2023-04-11'
 group by yymmdd
 order by yymmdd ASC
 
@@ -165,7 +165,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yymmdd between '2023-03-29' AND '2023-04-04'
+where	yymmdd between '2023-04-05' AND '2023-04-11'
 group by yymmdd, product
 order by yymmdd asc
 
@@ -244,7 +244,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yymmdd between '2023-03-29' AND '2023-04-04'
+where	yymmdd between '2023-04-05' AND '2023-04-11'
 group by yymmdd, shop
 order by yymmdd ASC
 
@@ -326,7 +326,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yymmdd between '2023-03-29' AND '2023-04-04'
+where	yymmdd between '2023-04-05' AND '2023-04-11'
 group BY yymmdd, product, shop
 order by yymmdd asc
 
@@ -407,7 +407,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yymmdd between '2023-03-29' AND '2023-04-04'
+where	yymmdd between '2023-04-05' AND '2023-04-11'
 group BY yymmdd, brand
 HAVING brand = '판토모나' OR brand = '페미론큐'
 order by yymmdd asc
@@ -490,7 +490,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yymmdd between '2023-03-29' AND '2023-04-04'
+where	yymmdd between '2023-04-05' AND '2023-04-11'
 group BY yymmdd, brand, shop
 HAVING brand = '판토모나' OR brand = '페미론큐'
 order by yymmdd ASC
@@ -629,7 +629,7 @@ FROM 	(
 						) AS t2
 			WHERE brand = '판토모나' OR brand = '페미론큐'
 		) AS t3
-WHERE t3.yymmdd BETWEEN '2023-03-29' AND '2023-04-04'
+WHERE t3.yymmdd BETWEEN '2023-04-05' AND '2023-04-11'
 
 
 
@@ -776,7 +776,7 @@ FROM 	(
 					) AS t1
 			WHERE brand = '판토모나' OR brand = '페미론큐'
 		) AS t2
-WHERE yymmdd between '2023-03-29' AND '2023-04-04'
+WHERE yymmdd between '2023-04-05' AND '2023-04-11'
 
 
 
@@ -851,7 +851,7 @@ FROM (
 			HAVING brand = '판토모나' OR brand = '페미론큐'
 			--order by yymmdd, brand, shop, qty
 		) AS t
-WHERE yymmdd between '2023-03-29' AND '2023-04-04'
+WHERE yymmdd between '2023-04-05' AND '2023-04-11'
 
 
 

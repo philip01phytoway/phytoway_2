@@ -8,7 +8,7 @@ Order BY order_date
 -- 파이토웨이 계간지
 SELECT	order_id, '계간지, 공통삽지' AS 삽지, order_date_time
 from	"order3" AS o
-where	order_date_time between '2023-04-11 09:00:00' AND '2023-04-11 14:00:00'
+where	order_date_time between '2023-04-11 14:00:00' AND '2023-04-12 09:00:00'
 and	order_name || recv_zip 
 IN (
 		select	order_name || recv_zip
@@ -24,7 +24,7 @@ Order BY order_date_time ASC, seq
 -- 서큐시안 미니북
 SELECT order_id, '미니책자' AS 삽지, order_date_time
 from	"order3"
-WHERE	(order_date_time between '2023-04-11 09:00:00' AND '2023-04-11 14:00:00' ) 
+WHERE	(order_date_time between '2023-04-11 14:00:00' AND '2023-04-12 09:00:00' ) 
 		and product_name = '써큐시안' 
 		and order_name || recv_zip 
 in (
@@ -47,7 +47,7 @@ from (
 					lag(order_date, +1) over (partition by order_tel order by order_date, seq asc) as prev_order_date
 			from	"Order2"
 		)as o 
-where dead_date between '2022-02-24' and '2023-05-20' 
+where dead_date between '2022-03-03' and '2023-05-27' 
 AND product_name LIKE '%판토모나%'
 order by order_date ASC
 
@@ -61,11 +61,11 @@ from (
 select	*,
 					lag(order_date, +1) over (partition by order_tel order by order_date, seq asc) as prev_order_date
 			from	"Order2"
-)as o where dead_date between '2023-03-22' and '2023-04-19' order by order_date ASC
+)as o where dead_date between '2023-03-29' and '2023-04-26' order by order_date ASC
 
 
 -- 문자발송
-select * from sms_send_log where reserved_date between '2023-03-29' and '2023-04-05'
+select * from sms_send_log where reserved_date between '2023-04-05' and '2023-04-12'
 AND sms_content_title = '활성고객_판토모나'
 
 
@@ -482,3 +482,112 @@ b.ez_code = '00188'
 
 WHERE shop_produ
 LIMIT 100
+
+-- order5 1차
+-- 제트배송 제외
+-- key = 이름 + (id 혹은 id 없으면 전화번호)
+SELECT * 
+FROM "order5"
+WHERE order_id = '22000064600171'
+
+store = '쿠팡'
+LIMIT 1
+
+SELECT yymm, brand, SUM(prd_amount_mod) 
+FROM "order_batch"
+GROUP BY yymm, brand
+
+SELECT * FROM "order_batch"
+
+INSERT INTO "order_batch" (yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type)
+SELECT yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type FROM "order5"
+
+
+SELECT *
+FROM "order5"
+LIMIT 1
+
+
+
+SELECT *
+FROM "EZ_Order"
+WHERE order_id = '2023011022401371'
+
+
+SELECT *
+FROM "b2b_gross"
+WHERE store_no = 25
+
+
+SELECT 	("orderer" ->> 'name') || ("orderer" ->> 'email') AS KEY,
+			"orderId"::text, '주문' as order_status, 
+			
+			LEFT("paidAt", 10) AS order_date,
+			REPLACE("paidAt", 'T', ' ') AS "order_date_time",
+			
+			("orderer" ->> 'name') AS "ordererName",
+			("orderer" ->> 'email') AS "ordererEmail",
+			("orderer" ->> 'safeNumber') AS "ordererTel",
+		 	 
+			("receiver" ->> 'name') AS "receiverName",
+			("receiver" ->> 'safeNumber') AS "receiverTel", -- 이건 case when 처리 필요한지?
+			("receiver" ->> 'postCode') AS "receiverZip",
+			("receiver" ->> 'addr1') AS "receiverAddress",
+			
+FROM "coupang_order" AS o,																
+		json_to_recordset(o."orderItems") as p(																	
+			"vendorItemName" CHARACTER varying(255),																
+			"vendorItemId" CHARACTER varying(255),
+			"shippingCount" INTEGER,
+			"cancelCount" INTEGER,
+			"orderPrice" INTEGER,
+			"discountPrice" INTEGER,
+			"confirmDate" 	CHARACTER varying(255)															
+		)
+LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
+LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
+WHERE "orderId"::text NOT IN (SELECT order_num FROM "Non_Order")
+
+
+
+SELECT ("orderer" ->> 'safeNumber') AS "ordererTel"
+FROM "coupang_order"
+WHERE LENGTH(("orderer" ->> 'safeNumber')) <> 11
+
+"ordererTel"
+"165730"
+
+
+171902
+98046
+67684
+
+
+SELECT *
+FROM "EZ_Order"
+WHERE seq = 488089
+
+
+SELECT *
+FROM "order_batch"
+WHERE yymm = '2022-08' AND brand = '판토모나'
+
+
+SELECT *
+FROM "naver_order_product"
+WHERE "optionCode" = '5620800705'
+
+
+SELECT 	*,
+			to_char(case when order_qty * product_qty * term * 1.2 > 365 then order_date::date + interval '1 day' * 365 else
+                                        order_date::date + interval '1 day' * order_qty * product_qty * term * 1.2 end, 'yyyy-mm-dd') as dead_date
+FROM "order4"
+WHERE product_name IN ('싸이토팜', '페미론큐글루타치온', '콘디맥스')
+AND store = '스마트스토어'
+AND order_date >= '2023-01-14'
+Order BY KEY, order_date, brand
+
+
+SELECT *
+FROM "EZ_Order"
+WHERE order_id = '2023022827820511'

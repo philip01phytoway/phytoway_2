@@ -11,7 +11,12 @@ SELECT * FROM "Naver_Custom_Order" Order by yymmdd DESC LIMIT 1000
 SELECT * FROM "Naver_Search_Channel" Order by yymmdd DESC LIMIT 1000
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-10'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-13'
+
+SELECT * FROM "AD_Naver" WHERE reg_date >= '2023-04-11'
+
+
+Order BY reg_date DESC LIMIT 5000
 
 -- 재고
 SELECT * FROM "Stock" Order BY yymmdd DESC
@@ -21,6 +26,7 @@ SELECT * FROM "Non_Order" Order BY yymmdd desc
 
 -- 쿠팡 상품광고. 계정 2개 모두.
 SELECT * FROM "AD_Coupang" Order BY reg_date DESC LIMIT 1000
+
 
 -- 쿠팡 브랜드광고
 SELECT * FROM "AD_CoupangBrand" Order BY reg_date DESC LIMIT 1000
@@ -61,20 +67,26 @@ AND reg_date >= '2023-10-01'
 
 
 -- 쿠팡 상품광고 매핑 누락 확인
-SELECT DISTINCT product2, product2_id 
-FROM "AD_Coupang"
-WHERE product2_id NOT IN (SELECT DISTINCT Product2_id FROM "ad_mapping3")
+SELECT product2_id 
+FROM "AD_Coupang" AS c 
+LEFT JOIN "ad_mapping3" AS m ON (c.product2_id = m.product2_id) 
+WHERE m.product2_id IS NULL
 
 -- 쿠팡 브랜드광고 매핑 누락 확인
-SELECT DISTINCT product2, product2_id 
-FROM "AD_CoupangBrand"
-WHERE product2_id NOT IN (SELECT DISTINCT Product2_id FROM "ad_mapping3")
+SELECT C.product2, C.product2_id
+FROM "AD_CoupangBrand" AS c
+LEFT JOIN "ad_mapping3" AS m ON (c.product2_id = m.product2_id)
+WHERE m.product2_id IS NULL AND C.product2_id <> '0'
 
 -- 구글 광고 매핑 누락 확인
 SELECT * 
-FROM "ad_google3" 
-WHERE adgroup_id NOT IN (SELECT adgroup_id FROM "ad_mapping3")
+FROM "ad_google3" AS g
+LEFT JOIN "ad_mapping3" AS m ON (g.adgroup_id = m.adgroup_id)
+WHERE m.adgroup_id IS NULL 
 
+SELECT *
+FROM "ad_mapping3"
+WHERE channel_no = 2
 
 -- 메타 매핑 누락 확인
 SELECT DISTINCT campaign, adgroup, ad
@@ -112,10 +124,14 @@ Order BY yymmdd DESC
 
 
 -- 풀필먼트 방어쿼리 (매핑 안된 옵션코드 있는지 확인)
-SELECT DISTINCT "optionCode"
-FROM "naver_order_product"
-WHERE "optionCode" NOT IN (SELECT "optionCode" FROM "naver_option")
+SELECT DISTINCT "optionCode", "productName", "productOption"
+FROM "naver_order_product" AS o
+LEFT JOIN "naver_option" AS op ON (o."optionCode" = op."option_code")
+WHERE op."option_code" IS NULL 
+--AND o."deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
 
+SELECT *
+FROM "naver_option"
 																						
 SELECT	y.yymm, y.yyww, o.yymmdd, o.product, o.shop_name,																								
 		sum(o.gross) as gross, sum(o.order_cnt) as order_cnt, sum(o.out_qty) as out_qty																							
@@ -308,10 +324,14 @@ from        (
                                         case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
                         from        purchase_term as t cross join "YMD2" as y 
                 )as t
-WHERE  yymmdd = '2023-04-10'
+WHERE  yymmdd between '2023-04-12' AND '2023-04-13'
 group BY yymm, yyww, yymmdd, product, shop
 order by yymmdd DESC
 
+SELECT *
+FROM "customer_zip5"
+WHERE order_date BETWEEN '2023-04-12' AND '2023-04-13'
+AND (shop = '스마트스토어' OR shop = '쿠팡')
 	
 -- B2B 매출		
 -- 로켓배송 : 과거 : 주문일(b2b_gross), 신규 : 출고일(이지어드민)
@@ -378,8 +398,59 @@ WHERE store_no = 25 AND product_no = 1 AND qty = 1
 Order BY order_date
 
 
-SELECT *
+SELECT * --o.order_date, nick, prd_amount
+FROM "EZ_Order" AS o,
+				(
+					LATERAL jsonb_to_recordset(o.order_products) p(product_id character varying(255), qty integer, prd_amount INTEGER)
+					LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::text)))
+					LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
+				)
+WHERE o.order_date >= '2023-04-12 14:00:00' AND o.order_date <= '2023-04-13 14:00:00' --AND pp.term > 0 AND o.order_name <> '' and p.prd_amount > 0
+		AND o.order_id NOT IN ( SELECT "Non_Order".order_num FROM "Non_Order")	
+		--AND o.order_id = '16000176640259'		
+		AND shop_name IN ('스토어팜(파이토웨이)', '쿠팡')	
+Order BY o.order_date DESC
+
+LIMIT 10000
+
+4월 12일 오후 2시 주문건 ~ 4월 13일 오후 2시 주문건
+--WHERE order_id = '6000176902824'
+
+SELECT JSONB_AGG(
+  CASE WHEN idx = 0 THEN
+    JSONB_SET(value, '{prd_amount}', to_jsonb((value->>'prd_amount')::numeric +
+      (SELECT COALESCE(SUM((value2->>'prd_amount')::numeric), 0)
+       FROM jsonb_array_elements("EZ_Order".order_products) WITH ORDINALITY el2(value2, idx2)
+       WHERE idx2 > 0))
+    )
+  ELSE
+    JSONB_SET(value, '{prd_amount}', '0')
+  END
+  ORDER BY idx
+)
+FROM "EZ_Order", jsonb_array_elements("EZ_Order".order_products) WITH ORDINALITY el(value, idx);
+WHERE order_date >= '2023-04-12 14:00:00' AND order_date <= '2023-04-13 14:00:00'
+AND shop_name IN ('스토어팜(파이토웨이)', '쿠팡')	
+
+
+
+
+SELECT * --shop_name, product_name, "options", amount, order_products
 FROM "EZ_Order"
+WHERE order_date >= '2023-04-12 14:00:00' AND order_date <= '2023-04-13 14:00:00'
+AND shop_name IN ('스토어팜(파이토웨이)', '쿠팡')	
+AND (order_products ->> qty) = '2'
+
+Order BY shop_name, order_products
+
+
+AND ("order_products" ->> "prd_amount") > 0
+
+
+order_products -> 1 ->> "prd_amount" > 0
+
+"EZ_Order".order_products
+
 WHERE "options" LIKE '%메디%' AND order_date >= '2022-08-23'  
 
 
@@ -530,7 +601,6 @@ GROUP BY yymm, yyww, yymmdd, channel, store, Product, owned_keyword_type, "keywo
 Order BY yymmdd desc, channel, store, Product, owned_keyword_type
 
 
-
 -----------------------------------------
 
 데이터마트 > 컨텐츠 폴더
@@ -541,7 +611,7 @@ Order BY yymmdd desc, channel, store, Product, owned_keyword_type
 -- 날짜 오늘로 수정
 SELECT *
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-11') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-04-14') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_keyword_type
 
 
@@ -549,7 +619,7 @@ Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_k
 SELECT 	yymm, yyww, yymmdd, Channel, brand, nick, page_type, owned_keyword_type, --Keyword, id,
 			SUM(cost1) AS cost1, sum(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-05') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-04-12') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 GROUP BY yymm, yyww, yymmdd, Channel, brand, nick, page_type, owned_keyword_type--, Keyword, id
 Order BY yymm desc, yyww desc, yymmdd DESC, Channel, brand, nick, page_type, owned_keyword_type--, keyword
 
@@ -888,11 +958,14 @@ LIMIT 100
 
 
 
-SELECT * FROM "cost_marketing"
-WHERE id = 3487 AND start_date = '2023-03-28' 
+SELECT * 
+FROM "cost_marketing"
+Order BY INDEX desc
 
 
-SELECT * FROM "cost_product"
+SELECT * 
+FROM "cost_product"
+Order BY INDEX DESC
 
 
 SELECT *
@@ -1109,8 +1182,8 @@ SELECT 	"ordererName" || ("shippingAddress" ->> 'zipCode')::text AS "name_zip",
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")
---WHERE 	"deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
---Order BY "order_date" DESC
+WHERE 	"paymentDate" IS NOT NULL -- "deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
+Order BY "order_date_time" DESC
 )
 
 SELECT cnt, SUM(cnt)
@@ -1144,4 +1217,67 @@ WHERE "ordererTel" NOT LIKE '010%'
 
 order_id =
 '2022031783418571'
+
+
+
+-- 쿠팡 계정 분리
+SELECT *
+FROM 	(
+			 SELECT y.yymm, y.yyww, y.yymmdd, '쿠팡' AS Channel, '쿠팡' AS store, p.brand, p.nick, c.account, '상품광고' AS "ad_type",
+			        CASE
+			            WHEN (((c.campaign)::text ~~ '%자상호%'::text) AND ((c.keyword)::text <> ''::text)) THEN '자상호'::text
+			            WHEN c.keyword LIKE concat('%', p.brand, '%') THEN '자상호'
+			            ELSE '비자상호'::text
+			        END AS owned_keyword_type,
+			    c.keyword,
+			    sum(c.adcost) AS adcost,
+			    sum(c.impressions) AS impression,
+			    sum(c.clicks) AS click,
+			    sum(c.order_cnt) AS "order",
+			    sum(c.gross) AS price
+			  
+			   FROM "AD_Coupang" AS c
+			   LEFT JOIN "ad_mapping3" AS m ON (m.product2_id::text = c.product2_id::text)
+			   LEFT JOIN "product" AS p ON (m.product_no = p.no)
+			   LEFT JOIN "YMD2" y ON (y.yymmdd::text = c.reg_date::text)
+			  	WHERE y.yymmdd::text > '2022-09-30'::TEXT --and
+			  	
+			  	GROUP BY y.yymm, y.yyww, y.yymmdd, p.brand, p.nick, c.account, c.campaign, c.keyword, c.product2_id
+			
+			
+			UNION ALL
+			 SELECT y.yymm,
+			    y.yyww,
+			    y.yymmdd,
+			    '쿠팡'::text AS channel,
+			    '쿠팡'::text AS store,
+			    		CASE
+			            WHEN ((cb.product2_id)::text <> '0'::text) THEN p.brand
+			            ELSE '파이토웨이'::character varying
+			        END AS brand,
+			        CASE
+			            WHEN ((cb.product2_id)::text <> '0'::text) THEN p.nick
+			            ELSE '파이토웨이'::character varying
+			        END AS product,
+			        cb.account, '브랜드광고' AS "ad_type",
+			        CASE
+			            WHEN cb.ad_group::text ~~ '%자상호%'::text THEN '자상호'::text
+			            ELSE '비자상호'::text
+			        END AS owned_keyword_type,
+			    cb.impression_keyword AS keyword,
+			    sum(cb.adcost) AS adcost,
+			    sum(cb.impressions) AS impression,
+			    sum(cb.clicks) AS click,
+			    sum(cb.order_cnt) AS "order",
+			    sum(cb.gross) AS price
+			   FROM "AD_CoupangBrand" AS cb         
+			   LEFT JOIN "ad_mapping3" AS  m ON (m.product2_id::text = cb.product2_id::text)
+			   LEFT JOIN "product" AS p ON (m.product_no = p.no)
+			   LEFT JOIN "YMD2" y ON (cb.reg_date::text = y.yymmdd::text)
+			  	WHERE ((cb.reg_date)::text <> ''::text)
+			  	GROUP BY y.yyww, y.yymm, y.yymmdd, cb.product2_id, p.brand, p.nick, cb.account, cb.campaign, cb.ad_group, cb.impression_keyword
+		) AS t
+WHERE yymmdd >= '2022-10-01'
+Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword desc
+
 

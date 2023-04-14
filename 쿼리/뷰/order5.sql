@@ -1,16 +1,47 @@
+SELECT 	
+			y.yymm, y.yyww, t.order_date, order_date_time,
+			key, order_id, order_status,  order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date,
+
+			CASE 
+				WHEN order_id <> '' AND phytoway = 'y' THEN
+					CASE 
+						WHEN ROW_NUMBER() OVER (PARTITION BY t.key ORDER BY t.order_id) = 1 THEN '신규'
+						ELSE '재구매'
+					END
+				ELSE ''
+			END AS all_cust_type,
+			
+			CASE 
+				WHEN order_id <> '' AND phytoway = 'y' THEN
+					CASE 
+						WHEN ROW_NUMBER() OVER (PARTITION BY t.key, brand ORDER BY t.order_id) = 1 THEN '신규'
+						ELSE '재구매'
+					END
+				ELSE ''
+			END AS brand_cust_type
+			
+FROM 	(
+
 -- 이지어드민
 -- 취소 및 반품 반영
 -- 네이버, 쿠팡 제외
 
 -- 정상 주문
-SELECT 	KEY, order_id, '주문' as order_status, 
+SELECT 	
+			order_name || order_tel AS KEY,		
+			order_id, '주문' as order_status, 
 
 			order_date, order_date_time, order_name, cust_id, order_tel,  recv_name, recv_tel, recv_zip, recv_address,
-			s.name AS store, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date
+			s.name AS store, 
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date
 
 FROM 	(
 			SELECT	
-						(o2.order_name || REPLACE(o2.recv_zip, '-', '')) AS key, 
 						o2.order_id,
 						left(order_date, 10) AS order_date,
 						order_date AS order_date_time,
@@ -101,7 +132,9 @@ UNION ALL
 
 
 -- 취소 및 반품
-SELECT 	KEY, order_id, 
+SELECT 	
+			order_name || order_tel AS KEY, 
+			order_id, 
 
 			CASE 
 				WHEN order_status BETWEEN 1 AND 2 THEN '취소'
@@ -110,11 +143,16 @@ SELECT 	KEY, order_id,
 			END AS order_status,
 
 			cs_date, cs_date_time, order_name, cust_id, order_tel,  recv_name, recv_tel, recv_zip, recv_address,
-			s.name AS store, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date
+			s.name AS store, 
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date
 
 FROM 	(
 			SELECT	
-						(o2.order_name || REPLACE(o2.recv_zip, '-', '')) AS key, 
 						o2.order_id,
 						
 						CASE 
@@ -207,39 +245,13 @@ WHERE
 				o3."options" LIKE '%메디%' AND cs_date < '2022-08-23'
 			)
 		)
-		AND s.no NOT IN (45, 13, 12)
-													
-													
-													
-													
+		AND s.no NOT IN (45, 12)
 
+UNION ALL 
 
-
-
-
-SELECT *
-FROM "EZ_Order"
-WHERE order_id = '2209161531338493'
-
-
-'20220415-0000097'
-
-
-'2022051529851291'
-
-[{"qty": "1", "name": "싸이토팜 관절 식물성 엠에스엠 MSM 100, 1개", "brand": "", "barcode": "PRMD00157", "is_gift": "0", "link_id": "", "options": "", "prd_seq": "506158", "order_cs": "0", "prd_amount": "54330", "product_id": "00157", "shop_price": "0", "cancel_date": "", "change_date": "", "enable_sale": "1", "extra_money": "0", "new_link_id": "", "supply_code": "20001", "supply_name": "자사", "supply_options": "", "prd_supply_price": "49391"}]
-
-
-
-
-
-
-
-
-
+-- 네이버
 -- 정상주문
-
-SELECT 	"ordererName" || ("shippingAddress" ->> 'zipCode')::text AS "key", 
+SELECT 	"ordererName" || "ordererId" AS "key", 
 			"orderId", '주문' as order_status, 
 			
 			LEFT("paymentDate", 10) AS "order_date",
@@ -253,6 +265,10 @@ SELECT 	"ordererName" || ("shippingAddress" ->> 'zipCode')::text AS "key",
 				ELSE '스마트스토어'
 			END AS store,
 			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
 			p.brand, p.nick, o.option_qty AS "product_qty", "quantity" AS order_qty, "quantity" * o.option_qty AS "out_qty", 
 			CASE 
          	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN 1 
@@ -267,14 +283,14 @@ FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
 WHERE 	"productOrderStatus" IN ('PAYED', 'DELIVERING', 'DELIVERED', 'PURCHASE_DECIDED', 'EXCHANGED', 'CANCELED', 'RETURNED')	
-
+AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
 
 UNION ALL 
 
-
+-- 네이버
 -- cs 주문
 
-SELECT 	"ordererName" || ("shippingAddress" ->> 'zipCode')::text AS "key", 
+SELECT 	"ordererName" || "ordererId" AS "key", 
 			"orderId", 
 			
 			CASE 
@@ -303,6 +319,10 @@ SELECT 	"ordererName" || ("shippingAddress" ->> 'zipCode')::text AS "key",
 				ELSE '스마트스토어'
 			END AS store,
 			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
 			p.brand, p.nick, o.option_qty AS "product_qty", "quantity" AS order_qty, "quantity" * o.option_qty -1 AS "out_qty", 
 			CASE 
          	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN -1 
@@ -317,27 +337,55 @@ FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
 WHERE 	"productOrderStatus" IN ('EXCHANGED', 'CANCELED', 'RETURNED')	
+AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
 
 
+UNION ALL 
 	
+-- 쿠팡
+-- 주문건
+SELECT 	
+			CASE 
+			    WHEN ("orderer" ->> 'name') IS NULL 
+			        THEN ("receiver" ->> 'name')
+			    ELSE ("orderer" ->> 'name')
+			END 
+			||
+			CASE 
+			    WHEN ("orderer" ->> 'email') IS NULL 
+			        THEN 
+			            CASE 
+			                WHEN ("orderer" ->> 'safeNumber') IS NULL 
+			                    THEN ("receiver" ->> 'postCode')
+			                ELSE REPLACE(("orderer" ->> 'safeNumber'), '-', '')
+			            END 
+			    ELSE ("orderer" ->> 'email')
+			END AS KEY,
 
--- 1. 주문건
-SELECT 	("orderer" ->> 'name') || ("receiver" ->> 'postCode') AS KEY,
 			"orderId"::text, '주문' as order_status, 
 			
 			LEFT("paidAt", 10) AS order_date,
 			REPLACE("paidAt", 'T', ' ') AS "order_date_time",
 			
-			("orderer" ->> 'name') AS "ordererName",
+			CASE 
+				WHEN 
+					("orderer" ->> 'name') IS NULL THEN ("receiver" ->> 'name')
+				ELSE ("orderer" ->> 'name')
+			END AS "ordererName",
 			("orderer" ->> 'email') AS "ordererEmail",
-			("orderer" ->> 'safeNumber') AS "ordererTel",
+			REPLACE(("orderer" ->> 'safeNumber'), '-', '') AS "ordererTel",
 		 	 
 			("receiver" ->> 'name') AS "receiverName",
-			("receiver" ->> 'safeNumber') AS "receiverTel", -- 이건 case when 처리 필요한지?
+			REPLACE(("receiver" ->> 'safeNumber'), '-', '') AS "receiverTel", -- 이건 case when 처리 필요한지?
 			("receiver" ->> 'postCode') AS "receiverZip",
 			("receiver" ->> 'addr1') AS "receiverAddress",
 			
 			'쿠팡' AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
 			pp.brand, pp.nick, op.qty AS "product_qty", p."shippingCount" AS "order_qty", op.qty * p."shippingCount" AS "out_qty",
 			CASE 
          	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN 1 
@@ -360,57 +408,176 @@ FROM "coupang_order" AS o,
 		)
 LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
 LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
---WHERE "cancelCount" = 0			
+WHERE o."orderId"::text NOT IN (SELECT order_num FROM "Non_Order")
+AND "cancelCount" = 0	
 
 
+UNION ALL 
 
--- 2. 교집합 cs건
-SELECT *
+
+-- b2b
+-- 22년1월~23년2월 정산 자료
+SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, order_date, order_date || ' 00:00:00' AS order_date_time, '' AS order_name, '' AS cust_id, '' AS order_tel,
+			'' AS recv_name, '' AS recv_tel, '' AS recv_zip, '' AS recv_address,
+			
+			s.name AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			p.brand, p.nick, 1 AS product_qty, 1 AS order_qty, 
+			
+			CASE WHEN gross < 0 THEN LEAST(qty, -qty)
+			ELSE qty
+			END AS out_qty,
+			
+			CASE WHEN gross < 0 THEN -1
+			ELSE 1 
+			END AS order_cnt, 
+			
+			gross AS price, gross AS price2, 
+			0 AS term, '' AS decide_date
+FROM "b2b_gross" AS b
+LEFT JOIN "store" AS s ON (b.store_no = s.no)
+LEFT JOIN "product" AS p ON (b.product_no = p.no)
+WHERE s.no <> 25
+
+
+UNION ALL 
+
+-- b2b
+-- 이지어드민으로 관리되는 b2b 매출
+SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, "substring"((o.order_date)::text, 1, 10) AS order_date,'' AS order_date_time, '' AS order_name, '' AS cust_id, '' AS order_tel, 
+			'' AS recv_name, '' AS recv_tel, '' AS recv_zip, '' AS recv_address, 
+			
+			CASE WHEN o."options" LIKE '%메디%' THEN '메디크로스랩'
+			WHEN o."options" LIKE '%온유%' THEN '온유약국'
+			ELSE s.name
+			END AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			o.brand, o.nick, 1 AS product_qty, 1 AS order_qty, o.out_qty, 1 AS order_cnt,
+			o.amount AS price, o.supply_price, 0 AS term, '' AS decide_date
+			
 FROM 	(
-			SELECT 	("orderer" ->> 'name') || ("receiver" ->> 'postCode') AS KEY,
-						"orderId", '주문' as order_status, 
-						
-						LEFT("paidAt", 10) AS order_date,
-						REPLACE("paidAt", 'T', ' ') AS "order_date_time",
-						
-						("orderer" ->> 'name') AS "ordererName",
-						("orderer" ->> 'email') AS "ordererEmail",
-						("orderer" ->> 'safeNumber') AS "ordererTel",
-					 	 
-						("receiver" ->> 'name') AS "receiverName",
-						("receiver" ->> 'safeNumber') AS "receiverTel", -- 이건 case when 처리 필요한지?
-						("receiver" ->> 'postCode') AS "receiverZip",
-						("receiver" ->> 'addr1') AS "receiverAddress",
-						
-						'쿠팡' AS store,
-						pp.brand, pp.nick, op.qty AS "product_qty", p."shippingCount" AS "order_qty", op.qty * p."shippingCount" AS "out_qty",
-						CASE 
-			         	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN 1 
-			         	ELSE 0 
-			       	END AS order_cnt,
-						
-						p."orderPrice" - p."discountPrice" AS "realPrice", 0 AS "expectedSettlementAmount", 
-						
-						pp.term, "confirmDate"
-						
-			FROM "coupang_order" AS o,																
-					json_to_recordset(o."orderItems") as p(																	
-						"vendorItemName" CHARACTER varying(255),																
-						"vendorItemId" CHARACTER varying(255),
-						"shippingCount" INTEGER,
-						"cancelCount" INTEGER,
-						"orderPrice" INTEGER,
-						"discountPrice" INTEGER,
-						"confirmDate" 	CHARACTER varying(255)															
-					) 
-			LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
-			LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
-		) AS o2
-LEFT JOIN "coupang_return_cancel" AS r ON (o2."orderId" = r."orderId")			
-WHERE r."orderId" IS NOT NULL AND "receiptType" = 'RETURN'		
+			SELECT *, o.qty AS out_qty
+			FROM "EZ_Order" AS o,
+				(
+					LATERAL jsonb_to_recordset(o.order_products) p(product_id character varying(255), qty integer, prd_amount INTEGER)
+					LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::TEXT)))
+					LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
+				)
+		) AS o
+LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
+WHERE 
+		(
+				(
+					o.shop_id IN (10087, 10286, 10387) 
+				)
+			OR
+				(
+					o."options" LIKE '%메디%' AND order_date >= '2022-08-23'  
+				)
+			OR 
+				(
+					o."options" LIKE '%온유%'
+				)
+		) AND 
+		o.order_date > '2019-01-01' AND o.order_date < '2024-01-01' 
+		AND o.order_id NOT IN ( SELECT "Non_Order".order_num FROM "Non_Order")									
+
+
+UNION ALL 
+
+--플레이오토
+SELECT 	order_name || order_tel AS KEY, '' AS order_id, '주문' as order_status, order_date, order_date || ' 00:00:00' AS order_date_time, order_name, '' AS cust_id, order_tel, 
+			order_name AS recv_name, order_tel AS recv_tel, order_zip AS recv_zip, '' AS recv_address, 
+			
+			o.shop_name AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			p.brand, p.nick, b.qty AS product_qty, order_qty, b.qty * order_qty AS out_qty,
+			
+			CASE WHEN order_qty > 0 THEN 1
+			ELSE -1
+			END AS order_cnt,
+			
+			order_price AS price, order_price AS price2, p.term, '' AS decide_date
+			
+FROM	"PA_Order2" as o 
+left join "Bundle" as b on (o.order_code = b.order_code)																					
+left join "product" as p on (b.product_id = p.no)	
+WHERE o.shop_name NOT IN ('스토어팜(파이토웨이)', '쿠팡')
+
+) AS t
+LEFT JOIN "YMD2" AS y ON (t.order_date = y.yymmdd)
+
+
+SELECT *
+FROM "naver_order_product"
+WHERE "optionCode" = '27429034951'
+
+
+'27429228265'
+
+
+
+
+SELECT *
+FROM "PA_Order2"
+
+-- 플레이오토 반품건은 주문번호 없으니까 제외를 하고,
+
+-- 이지어드민 반품건은 고객 key를 어떻게 할까. coupang_return_cancel에서 이름+id로 하고
+-- 주문일을 이지어드민에서, 취소일을 coupang_return_cancel에서 가져오자.
+-- 정상 주문 만들고, 취소 주문 만들어야 한다.
+
+-- 그런데 coupang_return_cancel에 고객 id가 없구나. 애초에 할 수 없는 거였네.
+-- 그럼 쿠팡 취소건은 key가 틀어지지만, 어쨌든 취소 후 다시 구매는 재구매로 보고, 
+-- 그때는 이름 + id가 있으니까 문제는 없다.
+
+-- 주문을 하고, 취소를 했어. 타이밍 떄문에 coupang_order에는 없는데 EZ_order에는 있어.
+-- 근데 그런 경우는 많지 않을테니까 무시해도 되겠지.
+
+SELECT *
+FROM "coupang_return_cancel" AS r
+LEFT JOIN "coupang_order" AS o ON (r."orderId" = o."orderId")
+LEFT JOIN "EZ_Order" AS e ON (r."orderId"::text = e.order_id)
+WHERE o."orderId" IS NULL AND e.order_id IS NOT NULL AND "receiptType" = 'RETURN' AND "receiptStatus" = 'RETURNS_COMPLETED'
+
+
+
+
+SELECT *
+FROM "EZ_Order"
+WHERE order_id = '29000113833423'
+
+
+SELECT *
+FROM "coupang_return_cancel"
+WHERE "orderId" = 29000113833423
+
+
+FROM "coupang_order"
+
+
+
+WHERE order_cs > 0 AND shop_name = '쿠팡'
+
+
+-- 주문목록 삭제를 하면, 주문번호도 삭제되는 것 같은데..
+-- 확실하진 않다.
 
 
 -- 3. 여집합 cs건
+-- 이건 일단 제외
 SELECT * --o."orderId" AS "coupang_order", r."orderId" AS "coupang_return_cancel"
 FROM "coupang_return_cancel" AS r
 LEFT JOIN "coupang_order" AS o ON (r."orderId" = o."orderId")
@@ -420,4 +587,10 @@ WHERE o."orderId" IS NULL AND "receiptType" = 'RETURN' AND "receiptStatus" = 'RE
 				
 SELECT *
 FROM "coupang_return_cancel" 			
-WHERE "receiptType" = 'RETURN'									
+WHERE "receiptType" = 'RETURN'	
+
+
+
+
+
+				
