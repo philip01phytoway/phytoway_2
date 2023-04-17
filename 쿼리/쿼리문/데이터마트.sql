@@ -11,7 +11,7 @@ SELECT * FROM "Naver_Custom_Order" Order by yymmdd DESC LIMIT 1000
 SELECT * FROM "Naver_Search_Channel" Order by yymmdd DESC LIMIT 1000
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-13'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-14'
 
 SELECT * FROM "AD_Naver" WHERE reg_date >= '2023-04-11'
 
@@ -67,7 +67,7 @@ AND reg_date >= '2023-10-01'
 
 
 -- 쿠팡 상품광고 매핑 누락 확인
-SELECT product2_id 
+SELECT DISTINCT c.product2, c.product2_id 
 FROM "AD_Coupang" AS c 
 LEFT JOIN "ad_mapping3" AS m ON (c.product2_id = m.product2_id) 
 WHERE m.product2_id IS NULL
@@ -112,6 +112,14 @@ FROM (
 
 -----------------------------------------
 
+-- 네이버 주문수집 여부 확인
+SELECT *
+FROM 		"naver_order_product" AS n
+LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+LEFT JOIN "product" AS p ON (o."product_no" = p."no")
+WHERE 	"paymentDate" IS NOT NULL 
+Order BY "paymentDate" DESC
+LIMIT 10000
 
 --총매출
 SELECT yymm, yyww, yymmdd, product_name, store, SUM(price) AS price, SUM(order_cnt) AS order_cnt, SUM(out_qty) AS out_qty
@@ -130,8 +138,6 @@ LEFT JOIN "naver_option" AS op ON (o."optionCode" = op."option_code")
 WHERE op."option_code" IS NULL 
 --AND o."deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
 
-SELECT *
-FROM "naver_option"
 																						
 SELECT	y.yymm, y.yyww, o.yymmdd, o.product, o.shop_name,																								
 		sum(o.gross) as gross, sum(o.order_cnt) as order_cnt, sum(o.out_qty) as out_qty																							
@@ -324,9 +330,10 @@ from        (
                                         case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
                         from        purchase_term as t cross join "YMD2" as y 
                 )as t
-WHERE  yymmdd between '2023-04-12' AND '2023-04-13'
+WHERE  yymmdd between '2023-04-14' AND '2023-04-16'
 group BY yymm, yyww, yymmdd, product, shop
 order by yymmdd DESC
+
 
 SELECT *
 FROM "customer_zip5"
@@ -611,7 +618,7 @@ Order BY yymmdd desc, channel, store, Product, owned_keyword_type
 -- 날짜 오늘로 수정
 SELECT *
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-14') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-04-17') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_keyword_type
 
 
@@ -1013,7 +1020,7 @@ SELECT 	"ordererName" || ("shippingAddress" ->> 'zipCode')::text AS "name_zip",
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")
---WHERE 	"deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
+WHERE 	"paymentDate" IS NOT NULL 
 Order BY "order_date_time" DESC
 )
 
@@ -1279,5 +1286,4 @@ FROM 	(
 		) AS t
 WHERE yymmdd >= '2022-10-01'
 Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword desc
-
 
