@@ -497,14 +497,43 @@ SELECT yymm, brand, SUM(prd_amount_mod)
 FROM "order_batch"
 GROUP BY yymm, brand
 
-SELECT * FROM "order_batch"
+DELETE FROM "order_batch"
 
 INSERT INTO "order_batch" (yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type)
 SELECT yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type FROM "order5"
 
 
+
+
+
 SELECT *
 FROM "order5"
+LIMIT 1
+
+
+
+CREATE PROCEDURE "cac_batch"()
+BEGIN
+    DELETE FROM "order_batch";
+    INSERT INTO "order_batch" (
+        yymm, yyww, order_date, order_date_time, key, order_id,
+        order_status, order_name, cust_id, order_tel, recv_name, recv_tel,
+        recv_zip, recv_address, store, phytoway, brand, nick, product_qty,
+        order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,
+        term, decide_date, all_cust_type, brand_cust_type
+    )
+    SELECT
+        yymm, yyww, order_date, order_date_time, key, order_id,
+        order_status, order_name, cust_id, order_tel, recv_name, recv_tel,
+        recv_zip, recv_address, store, phytoway, brand, nick, product_qty,
+        order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,
+        term, decide_date, all_cust_type, brand_cust_type
+    FROM "order5";
+END
+
+
+SELECT *
+FROM "ad_view7"
 LIMIT 1
 
 

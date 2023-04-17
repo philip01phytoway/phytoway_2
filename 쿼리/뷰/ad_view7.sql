@@ -198,112 +198,9 @@ LEFT JOIN "YMD2" as y ON (SUBSTRING(a."date", 1, 10) = y.yymmdd)
 
 
 ----- 샘플쿼리 -----
-
--- 네이버
--- 1. 키워드별 클릭수
-SELECT 	yymm, yyww, yymmdd, Channel, store, brand, nick, campaign, adgroup, Keyword, 
-			SUM(cost) AS cost, SUM(imp_cnt) AS imp_cnt, SUM(click_cnt) AS click_cnt
-FROM "ad_view7"
-WHERE Channel = '네이버'
-GROUP BY yymm, yyww, yymmdd, Channel, store, brand, nick, campaign, adgroup, keyword
-Order BY yymmdd desc
-
--- 2. 키워드별 매출
--- 단차가 맞지 않는 항목은 제외하였고 키워드로만 매핑하였음.
-WITH "ad_view_naver" AS (
-
-		SELECT 	yymm, yyww, yymmdd, Keyword, 
-					SUM(cost) AS cost, SUM(imp_cnt) AS imp_cnt, SUM(click_cnt) AS click_cnt, SUM(order_cnt) AS order_cnt, SUM(order_price) AS order_price
-		FROM "ad_view7"
-		WHERE Channel = '네이버'
-		GROUP BY yymm, yyww, yymmdd, Keyword
-)
-
-SELECT 	a.yymm, a.yyww, a.yymmdd, a.keyword, a.cost, a.imp_cnt, a.click_cnt, 
-			CASE 
-				WHEN a.order_cnt = 0 THEN n.order_cnt
-				ELSE a.order_cnt
-			END AS order_cnt,
-			CASE 
-				WHEN a.order_price = 0 THEN n.order_price
-				ELSE a.order_price
-			END AS order_price
-FROM "ad_view_naver" AS a
-LEFT JOIN (	     
-               
-		SELECT yymmdd, "D", SUM("I") AS order_cnt, SUM("K") AS order_price
-		FROM "Naver_Search_Channel"
-		WHERE "B" LIKE '%광고%'
-		GROUP BY yymmdd, "D"
-		
-		) AS n ON (a.yymmdd = n.yymmdd AND a.keyword = n."D")
-Order BY a.yymmdd DESC, order_price
-
-
--- 2. 쿠팡
-SELECT yymm, yyww, yymmdd, Channel, store, brand, nick, account, campaign, adgroup, Keyword,
-		SUM(cost) AS cost, SUM(imp_cnt) AS imp_cnt, SUM(click_cnt) AS click_cnt, SUM(order_cnt) AS order_cnt, SUM(order_price) AS order_price
-FROM "ad_view7"
-WHERE Channel = '쿠팡'
-GROUP BY yymm, yyww, yymmdd, Channel, store, brand, nick, account, campaign, adgroup, keyword
-Order BY yymmdd DESC
-
-
--- 3. 구글
-WITH "ad_view_google" AS (
-
-		SELECT yymm, yyww, yymmdd, Channel, store, brand, nick, account, campaign, adgroup, adgroup_id,
-				SUM(cost) AS cost, SUM(imp_cnt) AS imp_cnt, SUM(click_cnt) AS click_cnt, SUM(order_cnt) AS order_cnt, SUM(order_price) AS order_price
-		FROM "ad_view7"
-		WHERE Channel = '구글'
-		GROUP BY yymm, yyww, yymmdd, Channel, store, brand, nick, account, campaign, adgroup, adgroup_id
-)
-
-SELECT 	a.yymm, a.yyww, a.yymmdd, a.channel, a.store, a.brand, a.nick, a.account, a.campaign, a.adgroup,
-			a.cost, a.imp_cnt, a.click_cnt, g.order_cnt, g.order_price
-FROM "ad_view_google" AS a
-LEFT JOIN (
-
-		SELECT reg_date, adgroup_id, SUM(order_cnt) AS order_cnt, SUM(gross) AS order_price
-		FROM "ad_ga_aw"
-		GROUP BY reg_date, adgroup_id
-		
-		) AS g ON (a.yymmdd = g.reg_date AND a.adgroup_id = g.adgroup_id)
-Order BY yymmdd DESC
-
-
 -- cross join을 해야 할까?
-
-
--- 4. 메타
-WITH "ad_view_meta" AS (
-
-		SELECT yymm, yyww, yymmdd, Channel, store, brand, nick, account, campaign, adgroup, creative, utm_campaign, utm_content,
-				SUM(cost) AS cost, SUM(imp_cnt) AS imp_cnt, SUM(click_cnt) AS click_cnt, SUM(order_cnt) AS order_cnt, SUM(order_price) AS order_price
-		FROM "ad_view7"
-		WHERE Channel = '메타'
-		GROUP BY yymm, yyww, yymmdd, Channel, store, brand, nick, account, campaign, adgroup, creative, utm_campaign, utm_content
-)
-
-SELECT 	a.yymm, a.yyww, a.yymmdd, a.channel, a.store, a.brand, a.nick, a.account, campaign, adgroup, creative,
-			a.cost, a.imp_cnt, a.click_cnt, g.order_cnt, g.order_price
-FROM "ad_view_meta" AS a
-LEFT JOIN (
-
-		SELECT reg_date, utm_campaign, utm_content, SUM("order") AS order_cnt, SUM(gross) AS order_price
-		FROM "ad_ga_utm"
-		GROUP BY reg_date, utm_campaign, utm_content
-		
-		) AS g ON (a.yymmdd = g.reg_date AND a.campaign = g.utm_campaign AND a.creative = g.utm_content)
-Order BY yymmdd DESC
-
-
-
-
-SELECT reg_date, utm_campaign, utm_content, SUM("order") AS order_cnt, SUM(gross) AS order_price
-FROM "ad_ga_utm"
-GROUP BY reg_date, utm_campaign, utm_content
-
+-- 쿼리문이 너무 어려워지므로, cross join은 빼도록 하자.
+-- 그럼에도 불구하고 요청이 온다면, 설명을 해주고 선택하게끔 해야겠지.
 
 
 
@@ -311,39 +208,19 @@ SELECT *
 FROM "ad_view7"
 LIMIT 1
 
-SELECT reg_date, adgroup_id, SUM(order_cnt) AS order_cnt, SUM(gross) AS order_price
-FROM "ad_ga_aw"
-GROUP BY reg_date, adgroup_id
-HAVING COUNT(*) > 1
 
-141487919417
-143535828146
+INSERT INTO "ad_batch" (yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, adgroup_id, utm_campaign, utm_content)
+SELECT yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, adgroup_id, utm_campaign, utm_content FROM "ad_view7"
 
-SELECT *
-FROM "ad_ga_aw"
-GROUP BY 
-
-WHERE adgroup_id IN (
-'141487919417',
-'143535828146'
-)
-AND reg_date = '2023-01-30'
+SELECT * FROM "ad_batch"
 
 
 SELECT *
-FROM "ad_google3"
+FROM "content_view3"
+LIMIT 1
 
 SELECT *
-FROM "ad_view7"
-WHERE Channel = '쿠팡' AND yymmdd IS NULL 
+FROM "content_batch"
 
-
-SELECT *
-FROM "AD_CoupangBrand"
-WHERE reg_date = ''
-
-
-SELECT *
-FROM "AD_CoupangBrand"
-LIMIT 10000
-
+INSERT INTO content_batch (yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price)
+SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price FROM "content_view3"
