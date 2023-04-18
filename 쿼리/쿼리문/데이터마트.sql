@@ -11,7 +11,8 @@ SELECT * FROM "Naver_Custom_Order" Order by yymmdd DESC LIMIT 1000
 SELECT * FROM "Naver_Search_Channel" Order by yymmdd DESC LIMIT 1000
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-14'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-17'
+
 
 SELECT * FROM "AD_Naver" WHERE reg_date >= '2023-04-11'
 
@@ -25,8 +26,11 @@ SELECT * FROM "Stock" Order BY yymmdd DESC
 SELECT * FROM "Non_Order" Order BY yymmdd desc
 
 -- 쿠팡 상품광고. 계정 2개 모두.
-SELECT * FROM "AD_Coupang" Order BY reg_date DESC LIMIT 1000
+SELECT * FROM "AD_Coupang" Order BY reg_date asc LIMIT 1000
 
+SELECT SUM(adcost), SUM(clicks), SUM(impressions)
+FROM "AD_Coupang"
+WHERE reg_date BETWEEN '2019-11-01' AND '2019-11-31'
 
 -- 쿠팡 브랜드광고
 SELECT * FROM "AD_CoupangBrand" Order BY reg_date DESC LIMIT 1000
@@ -64,6 +68,18 @@ SELECT DISTINCT "B", "D"
 FROM "AD_Naver"
 WHERE "D" NOT IN (SELECT DISTINCT adgroup FROM "ad_mapping3" WHERE channel_no = 1)
 AND reg_date >= '2023-10-01'
+
+WITH naver_mapping AS (
+SELECT DISTINCT id, "B", "D", reg_date
+FROM "AD_Naver" AS a
+LEFT JOIN "ad_mapping3" AS m ON (a."B" = m.campaign AND a."D" = m.adgroup)
+WHERE m.campaign IS NULL OR m.adgroup IS NULL -- AND reg_date >= '2023-03-01'
+Order BY reg_date DESC
+LIMIT 100
+)
+
+SELECT DISTINCT id, "B", "D"
+FROM "naver_mapping"
 
 
 -- 쿠팡 상품광고 매핑 누락 확인
@@ -105,6 +121,8 @@ FROM (
 			Order BY yymm DESC, yyww desc, yymmdd desc, c.name, s.name, p.nick, ad.campaign, ad.adgroup, ad.ad
 ) AS t
 
+SELECT * FROM "ad_mapping3" WHERE channel_no = 5
+SELECT * FROM "ad_ga_utm" WHERE utm_content LIKE '%서효림%'
 
 -----------------------------------------
 
@@ -330,7 +348,7 @@ from        (
                                         case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
                         from        purchase_term as t cross join "YMD2" as y 
                 )as t
-WHERE  yymmdd between '2023-04-14' AND '2023-04-16'
+WHERE  yymmdd = '2023-04-17'
 group BY yymm, yyww, yymmdd, product, shop
 order by yymmdd DESC
 
@@ -618,7 +636,7 @@ Order BY yymmdd desc, channel, store, Product, owned_keyword_type
 -- 날짜 오늘로 수정
 SELECT *
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-17') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-04-18') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_keyword_type
 
 
@@ -672,6 +690,9 @@ GROUP BY y.yymm, y.yyww, y.yymmdd, t.nick, t.keyword
 Order BY y.yymm DESC , y.yyww desc, y.yymmdd desc, t.nick, t.keyword
 
 
+SELECT *
+FROM "Naver_Custom_Order"
+
 
 -- 유튜브 클릭수
 SELECT         y.yymm, y.yyww, y.yymmdd, nt_source, nt_medium, nt_keyword,
@@ -716,24 +737,7 @@ LEFT JOIN "YMD2" as y on (q.query_date = y.yymmdd)
 GROUP BY y.yymm, y.yyww, y.yymmdd, product				
 ORDER BY yymmdd desc, product DESC				
 	
-SELECT 	y.yymm, y.yyww, y.yymmdd, 
-			CASE 
-				WHEN p.brand is null then '파이토웨이' 
-				ELSE p.brand 
-			END AS brand,
-			CASE 
-				WHEN p.nick is null then '파이토웨이' 
-				ELSE p.nick 
-			END AS Product,
-			mobile_cnt, pc_cnt, mobile_cnt+q.pc_cnt AS tot_cnt
-FROM "Query_Log2" as q 
-LEFT JOIN "Keyword2" as k on (q.keyword = k.keyword)			
-LEFT JOIN "product" as p on (k.product_id = p.no)		
-LEFT JOIN "YMD2" as y on (q.query_date = y.yymmdd)		
 
-
-
-	
 -- 콜링 > 콜링2 > 판토모나 브랜드		
 SELECT	y.yymm, y.yyww, y.yymmdd, brand,		
 		sum(q.mobile_cnt) as mobile_cnt, sum(q.pc_cnt) as pc_cnt, sum(q.mobile_cnt+q.pc_cnt) as sum		
@@ -1304,3 +1308,45 @@ FROM 	(
 WHERE yymmdd >= '2022-10-01'
 Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword desc
 
+
+
+
+---- 배치 테이블 스케줄링 쿼리문 ----
+
+-- order_batch
+DELETE FROM "order_batch"
+
+INSERT INTO "order_batch" (yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type)
+SELECT yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type FROM "order5"
+
+
+-- ad_batch
+DELETE FROM "ad_batch"
+
+INSERT INTO "ad_batch" (yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price)
+SELECT yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price FROM "ad_view7"
+
+
+-- content_batch
+DELETE FROM "content_batch"
+
+INSERT INTO "content_batch" (yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price)
+SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price FROM "content_view3"
+
+
+
+
+CREATE OR REPLACE PROCEDURE get_all_products()
+LANGUAGE SQL
+AS $$
+SELECT * FROM "product"
+$$
+
+
+
+CALL get_all_products();
+
+
+SELECT * FROM "keyword_view"
+
+SELECT * FROM "order_batch"
