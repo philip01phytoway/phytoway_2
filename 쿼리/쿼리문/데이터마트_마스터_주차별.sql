@@ -86,7 +86,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yyww = '2023-15'
+where	yyww = '2023-16'
 group by yyww
 order by yyww ASC
 
@@ -169,7 +169,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yyww = '2023-15'
+where	yyww = '2023-16'
 group by yyww, product
 order by yyww asc
 
@@ -250,7 +250,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yyww = '2023-15'
+where	yyww = '2023-16'
 group by yyww, shop
 order by yyww ASC
 
@@ -333,7 +333,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yyww = '2023-15'
+where	yyww = '2023-16'
 group BY yyww, product, shop
 order by yyWW asc
 
@@ -415,7 +415,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yyww = '2023-15'
+where	yyww = '2023-16'
 group BY yyww, brand
 HAVING brand = '판토모나' OR brand = '페미론큐'
 order by yyWW asc
@@ -498,7 +498,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yyww = '2023-15'
+where	yyww = '2023-16'
 group BY yyww, brand, shop
 HAVING brand = '판토모나' OR brand = '페미론큐'
 order by yyWW ASC
@@ -631,7 +631,7 @@ FROM 	(
 						) AS t2
 			WHERE brand = '판토모나' OR brand = '페미론큐'
 		) AS t3
-WHERE t3.yyww = '2023-15'
+WHERE t3.yyww = '2023-16'
 
 
 
@@ -778,7 +778,7 @@ FROM 	(
 					) AS t1
 			WHERE brand = '판토모나' OR brand = '페미론큐'
 		) AS t2
-WHERE yyww = '2023-15'
+WHERE yyww = '2023-16'
 
 
 
@@ -853,7 +853,7 @@ FROM (
 			HAVING brand = '판토모나' OR brand = '페미론큐'
 			--order by yyww, brand, shop, qty
 		) AS t
-WHERE yyww = '2023-15'
+WHERE yyww = '2023-16'
 
 
 
@@ -916,7 +916,7 @@ FROM 	(
 			GROUP BY yymm, yyww, yymmdd, channel, brand, store, owned_keyword_type
 			HAVING brand = '판토모나' OR brand = '페미론큐'
 ) AS t
-WHERE yyww = '2023-15'
+WHERE yyww = '2023-16'
 Order BY yymmdd, channel, Product, store, owned_keyword_type
 
 
@@ -943,7 +943,7 @@ FROM 	(
 			SELECT 	yymm, yyww, yymmdd, channel, '전체' AS store, '전체' as nick, page_type, owned_keyword_type,
 						SUM(cost1) AS cost1, SUM(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 			FROM "content_view2"
-			WHERE (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
+			WHERE yyww = '2023-16' AND (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
 			GROUP BY yymm, yyww, yymmdd,  channel, page_type, owned_keyword_type
 			
 			UNION ALL 
@@ -952,7 +952,7 @@ FROM 	(
 			SELECT 	yymm, yyww, yymmdd, channel, '전체' as store, nick, page_type, owned_keyword_type,
 						SUM(cost1) AS cost1, SUM(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 			FROM "content_view2"
-			WHERE (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
+			WHERE yyww = '2023-16' AND (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
 			GROUP BY yymm, yyww, yymmdd,  channel, nick, page_type, owned_keyword_type
 			
 			UNION ALL 
@@ -961,7 +961,7 @@ FROM 	(
 			SELECT 	yymm, yyww, yymmdd, channel, store, '전체' as nick, page_type, owned_keyword_type,
 						SUM(cost1) AS cost1, SUM(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 			FROM "content_view2"
-			WHERE (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
+			WHERE yyww = '2023-16' AND (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
 			GROUP BY yymm, yyww, yymmdd, channel, store, page_type, owned_keyword_type
 			
 			UNION ALL 
@@ -970,7 +970,7 @@ FROM 	(
 			SELECT 	yymm, yyww, yymmdd, channel, store, nick, page_type, owned_keyword_type,
 						SUM(cost1) AS cost1, SUM(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 			FROM "content_view2"
-			WHERE (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
+			WHERE yyww = '2023-16' AND (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
 			GROUP BY yymm, yyww, yymmdd,  channel, store, brand, nick, page_type, owned_keyword_type
 			
 			UNION ALL 
@@ -979,7 +979,7 @@ FROM 	(
 			SELECT 	yymm, yyww, yymmdd, channel, '전체' as store, brand, page_type, owned_keyword_type,
 						SUM(cost1) AS cost1, SUM(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 			FROM "content_view2"
-			WHERE (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
+			WHERE yyww = '2023-16' AND (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
 			GROUP BY yymm, yyww, yymmdd,  channel, brand, page_type, owned_keyword_type
 			having brand = '판토모나' OR brand = '페미론큐'
 			
@@ -989,11 +989,11 @@ FROM 	(
 			SELECT 	yymm, yyww, yymmdd, channel, store, brand, page_type, owned_keyword_type,
 						SUM(cost1) AS cost1, SUM(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 			FROM "content_view2"
-			WHERE (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
+			WHERE yyww = '2023-16' AND (channel IN ('네이버', '구글') OR page_type IN ('파워컨텐츠', '인플루언서', '쇼핑상세'))
 			GROUP BY yymm, yyww, yymmdd,  channel, store, brand, page_type, owned_keyword_type
 			having brand = '판토모나' OR brand = '페미론큐'
 		) AS t
-WHERE yyww = '2023-15'
+WHERE yyww = '2023-16'
 AND (cost1 > 0 OR cost2 > 0 OR pv > 0 OR cc > 0 OR cc2 > 0 OR inflow_cnt > 0 OR order_cnt > 0 OR order_price > 0)
 
 
@@ -1075,7 +1075,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yyww = '2023-15'
+where	yyww = '2023-16'
 group by yyww, yymmdd
 order by yyww, yymmdd ASC
 
@@ -1415,7 +1415,7 @@ FROM 	(
 			WHERE nick LIKE '%판토모나%' OR nick LIKE '%페미론큐%'
 			GROUP BY yymm, yyww, yymmdd, store, nick
 		) AS t2
-WHERE t2.yyww = '2023-15'
+WHERE t2.yyww = '2023-16'
 Order BY yyww
 
 
@@ -1485,6 +1485,6 @@ FROM 	(
 			HAVING brand = '판토모나' OR brand = '페미론큐'
 			--Order BY y.yymmdd DESC	
 		) AS t
-WHERE t.yyww = '2023-15'
+WHERE t.yyww = '2023-16'
 Order BY t.yyww	
 

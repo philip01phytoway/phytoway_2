@@ -18,7 +18,8 @@ SELECT
 						ELSE '재구매'
 					END
 				ELSE ''
-			END AS brand_cust_type
+			END AS brand_cust_type,
+			inflow_path
 			
 FROM 	(
 
@@ -38,7 +39,7 @@ SELECT
 				WHEN brand = '기타' THEN 'n'
 				ELSE 'y'
 			END AS phytoway,
-			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date
+			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path
 
 FROM 	(
 			SELECT	
@@ -149,7 +150,7 @@ SELECT
 				WHEN brand = '기타' THEN 'n'
 				ELSE 'y'
 			END AS phytoway,
-			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date
+			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path
 
 FROM 	(
 			SELECT	
@@ -277,7 +278,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			
 			"totalPaymentAmount", "expectedSettlementAmount",
 			
-			p.term, "decisionDate"
+			p.term, "decisionDate", n."inflowPath" AS inflow_path
 			
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
@@ -331,7 +332,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			
 			"totalPaymentAmount" * -1 AS "totalPaymentAmount", "expectedSettlementAmount" * -1 AS "expectedSettlementAmount",
 			
-			p.term, "decisionDate"
+			p.term, "decisionDate", n."inflowPath" AS inflow_path
 			
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
@@ -394,7 +395,7 @@ SELECT
 			
 			p."orderPrice" - p."discountPrice" AS "realPrice", 0 AS "expectedSettlementAmount", 
 			
-			pp.term, "confirmDate"
+			pp.term, "confirmDate", '' AS inflow_path
 			
 FROM "coupang_order" AS o,																
 		json_to_recordset(o."orderItems") as p(																	
@@ -437,7 +438,7 @@ SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, order_date, order_date ||
 			END AS order_cnt, 
 			
 			gross AS price, gross AS price2, 
-			0 AS term, '' AS decide_date
+			0 AS term, '' AS decide_date, '' AS inflow_path
 FROM "b2b_gross" AS b
 LEFT JOIN "store" AS s ON (b.store_no = s.no)
 LEFT JOIN "product" AS p ON (b.product_no = p.no)
@@ -461,7 +462,7 @@ SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, "substring"((o.order_date
 				ELSE 'y'
 			END AS phytoway,
 			o.brand, o.nick, 1 AS product_qty, 1 AS order_qty, o.out_qty, 1 AS order_cnt,
-			o.amount AS price, o.supply_price, 0 AS term, '' AS decide_date
+			o.amount AS price, o.supply_price, 0 AS term, '' AS decide_date, '' AS inflow_path
 			
 FROM 	(
 			SELECT *, o.qty AS out_qty
@@ -509,7 +510,7 @@ SELECT 	order_name || order_tel AS KEY, '' AS order_id, '주문' as order_status
 			ELSE -1
 			END AS order_cnt,
 			
-			order_price AS price, order_price AS price2, p.term, '' AS decide_date
+			order_price AS price, order_price AS price2, p.term, '' AS decide_date, '' AS inflow_path
 			
 FROM	"PA_Order2" as o 
 left join "Bundle" as b on (o.order_code = b.order_code)																					

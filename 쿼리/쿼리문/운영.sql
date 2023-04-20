@@ -47,7 +47,7 @@ from (
 					lag(order_date, +1) over (partition by order_tel order by order_date, seq asc) as prev_order_date
 			from	"Order2"
 		)as o 
-where dead_date between '2022-03-03' and '2023-05-27' 
+where dead_date between '2022-03-10' and '2023-06-03' 
 AND product_name LIKE '%판토모나%'
 order by order_date ASC
 
@@ -61,11 +61,12 @@ from (
 select	*,
 					lag(order_date, +1) over (partition by order_tel order by order_date, seq asc) as prev_order_date
 			from	"Order2"
-)as o where dead_date between '2023-03-29' and '2023-04-26' order by order_date ASC
+)as o where dead_date between '2023-04-05' and '2023-05-03' order by order_date ASC
 
 
 -- 문자발송
-select * from sms_send_log where reserved_date between '2023-04-05' and '2023-04-12'
+select * from sms_send_log where reserved_date between '2023-04-12' and '2023-04-19'
+
 AND sms_content_title = '활성고객_판토모나'
 
 
@@ -619,4 +620,49 @@ Order BY KEY, order_date, brand
 
 SELECT *
 FROM "EZ_Order"
+WHERE shop_name = '쿠팡_제트배송'
+Order BY order_date DESC LIMIT 10000
+
+
 WHERE order_id = '2023022827820511'
+
+
+SELECT *
+FROM "ad_batch"
+WHERE Channel = '쿠팡' AND yymm = '2020-02'
+
+
+SELECT *
+FROM "AD_Coupang"
+WHERE "A" > '20220201' AND "A" < '20220231'
+
+
+reg_date BETWEEN '2022-01-01' AND '2022-02-30'
+
+SELECT * 
+FROM "cac_labhundred"
+
+
+WHERE 
+
+SELECT *
+FROM "cost_marketing"
+
+SELECT *
+FROM "cost_product"
+
+ FROM "cac_labhundred"
+WHERE 
+
+
+SELECT *
+FROM "ad_batch"
+WHERE Channel = '구글'
+
+
+SELECT *
+FROM "ad_mapping3"
+WHERE channel_no = 2
+
+SELECT *
+FROM "ad_google3"

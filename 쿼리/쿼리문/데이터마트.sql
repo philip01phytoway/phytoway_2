@@ -11,7 +11,7 @@ SELECT * FROM "Naver_Custom_Order" Order by yymmdd DESC LIMIT 1000
 SELECT * FROM "Naver_Search_Channel" Order by yymmdd DESC LIMIT 1000
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-17'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-19'
 
 
 SELECT * FROM "AD_Naver" WHERE reg_date >= '2023-04-11'
@@ -26,11 +26,7 @@ SELECT * FROM "Stock" Order BY yymmdd DESC
 SELECT * FROM "Non_Order" Order BY yymmdd desc
 
 -- 쿠팡 상품광고. 계정 2개 모두.
-SELECT * FROM "AD_Coupang" Order BY reg_date asc LIMIT 1000
-
-SELECT SUM(adcost), SUM(clicks), SUM(impressions)
-FROM "AD_Coupang"
-WHERE reg_date BETWEEN '2019-11-01' AND '2019-11-31'
+SELECT * FROM "AD_Coupang" Order BY reg_date desc LIMIT 1000
 
 -- 쿠팡 브랜드광고
 SELECT * FROM "AD_CoupangBrand" Order BY reg_date DESC LIMIT 1000
@@ -70,12 +66,12 @@ WHERE "D" NOT IN (SELECT DISTINCT adgroup FROM "ad_mapping3" WHERE channel_no = 
 AND reg_date >= '2023-10-01'
 
 WITH naver_mapping AS (
-SELECT DISTINCT id, "B", "D", reg_date
-FROM "AD_Naver" AS a
-LEFT JOIN "ad_mapping3" AS m ON (a."B" = m.campaign AND a."D" = m.adgroup)
-WHERE m.campaign IS NULL OR m.adgroup IS NULL -- AND reg_date >= '2023-03-01'
-Order BY reg_date DESC
-LIMIT 100
+		SELECT DISTINCT id, "B", "D", reg_date
+		FROM "AD_Naver" AS a
+		LEFT JOIN "ad_mapping3" AS m ON (a."B" = m.campaign AND a."D" = m.adgroup)
+		WHERE m.campaign IS NULL OR m.adgroup IS NULL -- AND reg_date >= '2023-03-01'
+		Order BY reg_date DESC
+		LIMIT 100
 )
 
 SELECT DISTINCT id, "B", "D"
@@ -83,7 +79,7 @@ FROM "naver_mapping"
 
 
 -- 쿠팡 상품광고 매핑 누락 확인
-SELECT DISTINCT c.product2, c.product2_id 
+SELECT DISTINCT ad_account, c.product2, c.product2_id 
 FROM "AD_Coupang" AS c 
 LEFT JOIN "ad_mapping3" AS m ON (c.product2_id = m.product2_id) 
 WHERE m.product2_id IS NULL
@@ -224,56 +220,7 @@ GROUP BY y.yymm, y.yyww, o.yymmdd, o.product, o.shop_name
 ORDER BY o.yymmdd DESC																									
 																																															
 
-
--- 고객 시트 > 전체 탭																			
-select	y.yymm, y.yyww, y.yymmdd, new_cnt,																				
-		sum(new_cnt) over (order by t1.order_date asc) as tot_cnt,																			
-		cross_cnt, rank, cnt																			
-from	(	select	order_date,																		
-					case when rank = 1 then count(*) else 0 end as new_cnt,																
-					rank, count(*) as cnt																
-			from	(																	
-						select	key, order_date,														
-								rank() over(partition BY key order by key asc, order_date asc) as rank													
-						from "customer7"															
-					) t																
-			group by order_date, rank																		
-		) t1 left join (																			
-			select	order_date, count(*) as cross_cnt																	
-			from	(																	
-						select	key, product, order_date, prev_product														
-						from	(														
-									select	key, product, order_date,											
-											lag(product, -1) over (partition by key order by key asc, order_date desc) as prev_product										
-									from "customer7"												
-								) t													
-						where	product <> prev_product														
-					) t																
-			group by order_date																		
-		) t2 on (t1.order_date = t2.order_date) left join																			
-		"YMD2" as y on (t1.order_date = y.yymmdd)																			
-where t1.order_date < '2024-12-31'																					
-order by t1.order_date desc, rank ASC																					
-																																										
-																																									
--- 고객 시트 > 상품별 탭																				
-select	y.yymm, y.yyww, y.yymmdd, product, new_cnt,																				
-			sum(new_cnt) over (partition BY product order by t1.order_date ASC, product asc) as tot_cnt, rank, cnt																		
-from	(	select	order_date, product,																		
-					case when rank = 1 then count(*) else 0 end as new_cnt,																
-					rank, count(*) as cnt																
-			from	(																	
-						select	KEY, product, order_date,														
-								rank() over(partition BY key order by key ASC, product asc, order_date asc) as rank													
-						from "customer7"															
-					) t																
-			group by order_date, product, rank																		
-		) t1 left join																			
-		"YMD2" as y on (t1.order_date = y.yymmdd)																			
-where t1.order_date < '2024-12-31' AND Product IS NOT null																					
-order by t1.order_date desc, product ASC, rank ASC																					
-	
-																				
+																			
 -- 매출 및 고객 - 일자, 상품, 스토어 시트																					
 with purchase_term as (
         select         key, product, shop, order_date, seq,
@@ -348,7 +295,7 @@ from        (
                                         case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
                         from        purchase_term as t cross join "YMD2" as y 
                 )as t
-WHERE  yymmdd = '2023-04-17'
+WHERE  yymmdd = '2023-04-19'
 group BY yymm, yyww, yymmdd, product, shop
 order by yymmdd DESC
 
@@ -616,14 +563,65 @@ WHERE ad.campaign IS NOT NULL OR ga.utm_campaign IS NOT null
 Order BY yymmdd DESC, yy.campaign, yy.ad_mod
 
 
-	
---ad_view6 - 쿠팡
-SELECT  yymm, yyww, yymmdd, channel, store, Product, owned_keyword_type, "keyword",
-                        SUM(adcost) AS "광고비", SUM(impression) AS "노출수", SUM(click) AS "클릭수", SUM("order") AS "구매수", SUM(price) AS "매출"
-FROM "ad_view6"
-WHERE Channel = '쿠팡' AND yymmdd > '2022-09-30'
-GROUP BY yymm, yyww, yymmdd, channel, store, Product, owned_keyword_type, "keyword"
-Order BY yymmdd desc, channel, store, Product, owned_keyword_type
+-- 쿠팡 계정 분리
+SELECT *
+FROM 	(
+			 SELECT y.yymm, y.yyww, y.yymmdd, '쿠팡' AS Channel, '쿠팡' AS store, p.brand, p.nick, c.account, '상품광고' AS "ad_type",
+			        CASE
+			            WHEN (((c.campaign)::text ~~ '%자상호%'::text) AND ((c.keyword)::text <> ''::text)) THEN '자상호'::text
+			            WHEN c.keyword LIKE concat('%', p.brand, '%') THEN '자상호'
+			            ELSE '비자상호'::text
+			        END AS owned_keyword_type,
+			    c.keyword,
+			    sum(c.adcost) AS adcost,
+			    sum(c.impressions) AS impression,
+			    sum(c.clicks) AS click,
+			    sum(c.order_cnt) AS "order",
+			    sum(c.gross) AS price
+			  
+			   FROM "AD_Coupang" AS c
+			   LEFT JOIN "ad_mapping3" AS m ON (m.product2_id::text = c.product2_id::text)
+			   LEFT JOIN "product" AS p ON (m.product_no = p.no)
+			   LEFT JOIN "YMD2" y ON (y.yymmdd::text = c.reg_date::text)
+			  	WHERE y.yymmdd::text > '2022-09-30'::TEXT --and
+			  	
+			  	GROUP BY y.yymm, y.yyww, y.yymmdd, p.brand, p.nick, c.account, c.campaign, c.keyword, c.product2_id
+			
+			
+			UNION ALL
+			 SELECT y.yymm,
+			    y.yyww,
+			    y.yymmdd,
+			    '쿠팡'::text AS channel,
+			    '쿠팡'::text AS store,
+			    		CASE
+			            WHEN ((cb.product2_id)::text <> '0'::text) THEN p.brand
+			            ELSE '파이토웨이'::character varying
+			        END AS brand,
+			        CASE
+			            WHEN ((cb.product2_id)::text <> '0'::text) THEN p.nick
+			            ELSE '파이토웨이'::character varying
+			        END AS product,
+			        cb.account, '브랜드광고' AS "ad_type",
+			        CASE
+			            WHEN cb.ad_group::text ~~ '%자상호%'::text THEN '자상호'::text
+			            ELSE '비자상호'::text
+			        END AS owned_keyword_type,
+			    cb.impression_keyword AS keyword,
+			    sum(cb.adcost) AS adcost,
+			    sum(cb.impressions) AS impression,
+			    sum(cb.clicks) AS click,
+			    sum(cb.order_cnt) AS "order",
+			    sum(cb.gross) AS price
+			   FROM "AD_CoupangBrand" AS cb         
+			   LEFT JOIN "ad_mapping3" AS  m ON (m.product2_id::text = cb.product2_id::text)
+			   LEFT JOIN "product" AS p ON (m.product_no = p.no)
+			   LEFT JOIN "YMD2" y ON (cb.reg_date::text = y.yymmdd::text)
+			  	WHERE ((cb.reg_date)::text <> ''::text)
+			  	GROUP BY y.yyww, y.yymm, y.yymmdd, cb.product2_id, p.brand, p.nick, cb.account, cb.campaign, cb.ad_group, cb.impression_keyword
+		) AS t
+WHERE yymmdd >= '2022-10-01'
+Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword desc
 
 
 -----------------------------------------
@@ -636,7 +634,7 @@ Order BY yymmdd desc, channel, store, Product, owned_keyword_type
 -- 날짜 오늘로 수정
 SELECT *
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-18') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-04-20') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_keyword_type
 
 
@@ -644,7 +642,7 @@ Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_k
 SELECT 	yymm, yyww, yymmdd, Channel, brand, nick, page_type, owned_keyword_type, --Keyword, id,
 			SUM(cost1) AS cost1, sum(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-12') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-04-19') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 GROUP BY yymm, yyww, yymmdd, Channel, brand, nick, page_type, owned_keyword_type--, Keyword, id
 Order BY yymm desc, yyww desc, yymmdd DESC, Channel, brand, nick, page_type, owned_keyword_type--, keyword
 
@@ -1248,83 +1246,23 @@ order_id =
 
 
 
--- 쿠팡 계정 분리
-SELECT *
-FROM 	(
-			 SELECT y.yymm, y.yyww, y.yymmdd, '쿠팡' AS Channel, '쿠팡' AS store, p.brand, p.nick, c.account, '상품광고' AS "ad_type",
-			        CASE
-			            WHEN (((c.campaign)::text ~~ '%자상호%'::text) AND ((c.keyword)::text <> ''::text)) THEN '자상호'::text
-			            WHEN c.keyword LIKE concat('%', p.brand, '%') THEN '자상호'
-			            ELSE '비자상호'::text
-			        END AS owned_keyword_type,
-			    c.keyword,
-			    sum(c.adcost) AS adcost,
-			    sum(c.impressions) AS impression,
-			    sum(c.clicks) AS click,
-			    sum(c.order_cnt) AS "order",
-			    sum(c.gross) AS price
-			  
-			   FROM "AD_Coupang" AS c
-			   LEFT JOIN "ad_mapping3" AS m ON (m.product2_id::text = c.product2_id::text)
-			   LEFT JOIN "product" AS p ON (m.product_no = p.no)
-			   LEFT JOIN "YMD2" y ON (y.yymmdd::text = c.reg_date::text)
-			  	WHERE y.yymmdd::text > '2022-09-30'::TEXT --and
-			  	
-			  	GROUP BY y.yymm, y.yyww, y.yymmdd, p.brand, p.nick, c.account, c.campaign, c.keyword, c.product2_id
-			
-			
-			UNION ALL
-			 SELECT y.yymm,
-			    y.yyww,
-			    y.yymmdd,
-			    '쿠팡'::text AS channel,
-			    '쿠팡'::text AS store,
-			    		CASE
-			            WHEN ((cb.product2_id)::text <> '0'::text) THEN p.brand
-			            ELSE '파이토웨이'::character varying
-			        END AS brand,
-			        CASE
-			            WHEN ((cb.product2_id)::text <> '0'::text) THEN p.nick
-			            ELSE '파이토웨이'::character varying
-			        END AS product,
-			        cb.account, '브랜드광고' AS "ad_type",
-			        CASE
-			            WHEN cb.ad_group::text ~~ '%자상호%'::text THEN '자상호'::text
-			            ELSE '비자상호'::text
-			        END AS owned_keyword_type,
-			    cb.impression_keyword AS keyword,
-			    sum(cb.adcost) AS adcost,
-			    sum(cb.impressions) AS impression,
-			    sum(cb.clicks) AS click,
-			    sum(cb.order_cnt) AS "order",
-			    sum(cb.gross) AS price
-			   FROM "AD_CoupangBrand" AS cb         
-			   LEFT JOIN "ad_mapping3" AS  m ON (m.product2_id::text = cb.product2_id::text)
-			   LEFT JOIN "product" AS p ON (m.product_no = p.no)
-			   LEFT JOIN "YMD2" y ON (cb.reg_date::text = y.yymmdd::text)
-			  	WHERE ((cb.reg_date)::text <> ''::text)
-			  	GROUP BY y.yyww, y.yymm, y.yymmdd, cb.product2_id, p.brand, p.nick, cb.account, cb.campaign, cb.ad_group, cb.impression_keyword
-		) AS t
-WHERE yymmdd >= '2022-10-01'
-Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword desc
 
-
-
+SELECT * FROM "order_batch"
 
 ---- 배치 테이블 스케줄링 쿼리문 ----
 
 -- order_batch
 DELETE FROM "order_batch"
 
-INSERT INTO "order_batch" (yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type)
-SELECT yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type FROM "order5"
+INSERT INTO "order_batch" (yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type, inflow_path)
+SELECT yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type, inflow_path FROM "order5"
 
 
 -- ad_batch
 DELETE FROM "ad_batch"
 
-INSERT INTO "ad_batch" (yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price)
-SELECT yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price FROM "ad_view7"
+INSERT INTO "ad_batch" (yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id)
+SELECT yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id FROM "ad_view7"
 
 
 -- content_batch
@@ -1350,3 +1288,66 @@ CALL get_all_products();
 SELECT * FROM "keyword_view"
 
 SELECT * FROM "order_batch"
+
+
+
+-- 고객 시트 > 전체 탭																			
+select	y.yymm, y.yyww, y.yymmdd, new_cnt,																				
+		sum(new_cnt) over (order by t1.order_date asc) as tot_cnt,																			
+		cross_cnt, rank, cnt																			
+from	(	select	order_date,																		
+					case when rank = 1 then count(*) else 0 end as new_cnt,																
+					rank, count(*) as cnt																
+			from	(																	
+						select	key, order_date,														
+								rank() over(partition BY key order by key asc, order_date asc) as rank													
+						from "customer7"															
+					) t																
+			group by order_date, rank																		
+		) t1 left join (																			
+			select	order_date, count(*) as cross_cnt																	
+			from	(																	
+						select	key, product, order_date, prev_product														
+						from	(														
+									select	key, product, order_date,											
+											lag(product, -1) over (partition by key order by key asc, order_date desc) as prev_product										
+									from "customer7"												
+								) t													
+						where	product <> prev_product														
+					) t																
+			group by order_date																		
+		) t2 on (t1.order_date = t2.order_date) left join																			
+		"YMD2" as y on (t1.order_date = y.yymmdd)																			
+where t1.order_date < '2024-12-31'																					
+order by t1.order_date desc, rank ASC																					
+																																										
+																																									
+-- 고객 시트 > 상품별 탭																				
+select	y.yymm, y.yyww, y.yymmdd, product, new_cnt,																				
+			sum(new_cnt) over (partition BY product order by t1.order_date ASC, product asc) as tot_cnt, rank, cnt																		
+from	(	select	order_date, product,																		
+					case when rank = 1 then count(*) else 0 end as new_cnt,																
+					rank, count(*) as cnt																
+			from	(																	
+						select	KEY, product, order_date,														
+								rank() over(partition BY key order by key ASC, product asc, order_date asc) as rank													
+						from "customer7"															
+					) t																
+			group by order_date, product, rank																		
+		) t1 left join																			
+		"YMD2" as y on (t1.order_date = y.yymmdd)																			
+where t1.order_date < '2024-12-31' AND Product IS NOT null																					
+order by t1.order_date desc, product ASC, rank ASC																					
+	
+
+
+	
+--ad_view6 - 쿠팡
+SELECT  yymm, yyww, yymmdd, channel, store, Product, owned_keyword_type, "keyword",
+                        SUM(adcost) AS "광고비", SUM(impression) AS "노출수", SUM(click) AS "클릭수", SUM("order") AS "구매수", SUM(price) AS "매출"
+FROM "ad_view6"
+WHERE Channel = '쿠팡' AND yymmdd > '2022-09-30'
+GROUP BY yymm, yyww, yymmdd, channel, store, Product, owned_keyword_type, "keyword"
+Order BY yymmdd desc, channel, store, Product, owned_keyword_type
+
+	
