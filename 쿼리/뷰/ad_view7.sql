@@ -1,7 +1,8 @@
 
 -- 1. 네이버
-SELECT 	y.yymm, y.yyww, y.yymmdd, c.name AS channel, s.name AS store, p.brand, p.nick, 
-			a."id" AS account, '검색광고' AS "ad_type", a."C" AS "campaign_type", a."I" AS imp_area, 
+SELECT 	y.yymm, y.yyww, y.yymmdd, c.name AS channel, s.name AS store,        
+			p.brand, p.nick, 
+			m.ad_account AS account, '검색광고' AS "ad_type", a."C" AS "campaign_type", a."I" AS imp_area, 
 			a."B" AS "campaign", a."D" AS "adgroup", a."G" AS "creative", 
 			
 			CASE 

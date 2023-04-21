@@ -562,8 +562,10 @@ SELECT 	("orderer" ->> 'name') || ("orderer" ->> 'email') AS KEY,
 			("receiver" ->> 'name') AS "receiverName",
 			("receiver" ->> 'safeNumber') AS "receiverTel", -- 이건 case when 처리 필요한지?
 			("receiver" ->> 'postCode') AS "receiverZip",
-			("receiver" ->> 'addr1') AS "receiverAddress",
-			
+			("receiver" ->> 'addr1') AS "receiverAddress"
+
+
+SELECT 	p."vendorItemName", p."vendorItemId", op."option"		
 FROM "coupang_order" AS o,																
 		json_to_recordset(o."orderItems") as p(																	
 			"vendorItemName" CHARACTER varying(255),																
@@ -576,7 +578,10 @@ FROM "coupang_order" AS o,
 		)
 LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
 LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
-WHERE "orderId"::text NOT IN (SELECT order_num FROM "Non_Order")
+WHERE op."option" IS NOT NULL 
+
+
+"orderId"::text NOT IN (SELECT order_num FROM "Non_Order")
 
 
 

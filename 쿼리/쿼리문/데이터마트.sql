@@ -11,7 +11,7 @@ SELECT * FROM "Naver_Custom_Order" Order by yymmdd DESC LIMIT 1000
 SELECT * FROM "Naver_Search_Channel" Order by yymmdd DESC LIMIT 1000
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-19'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-20'
 
 
 SELECT * FROM "AD_Naver" WHERE reg_date >= '2023-04-11'
@@ -27,6 +27,9 @@ SELECT * FROM "Non_Order" Order BY yymmdd desc
 
 -- 쿠팡 상품광고. 계정 2개 모두.
 SELECT * FROM "AD_Coupang" Order BY reg_date desc LIMIT 1000
+
+SELECT * FROM "AD_Coupang" WHERE account = 'A00350733' AND reg_date = '2023-04-20'
+
 
 -- 쿠팡 브랜드광고
 SELECT * FROM "AD_CoupangBrand" Order BY reg_date DESC LIMIT 1000
@@ -51,6 +54,24 @@ SELECT * FROM "ad_meta" Order BY reg_date DESC
 
 -- ADN 광고
 SELECT * FROM "ad_adn" Order BY "date" DESC
+
+-- 중복 매핑도 확인 필요. 누락 없이, 중복 없이 매핑해야 함. MECE.
+
+SELECT distinct adgroup_id FROM "ad_mapping3" WHERE channel_no = 2
+
+-- 네이버 중복 매핑 확인
+SELECT campaign, adgroup
+FROM "ad_mapping3" 
+WHERE channel_no = 1
+GROUP BY campaign, adgroup
+HAVING COUNT(*) > 1
+
+
+-- AD_Naver의 행 개수와 매핑 이후 행 개수를 비교해서 일치하는지 확인해야 할 듯
+
+SELECT * FROM "AD_Naver" WHERE "B" = 'B_파이토웨이' AND "D" = '파이토웨이_MO'
+
+
 
 -- 네이버 검색광고 매핑 누락 확인
 SELECT DISTINCT "B", "D"
@@ -126,6 +147,13 @@ SELECT * FROM "ad_ga_utm" WHERE utm_content LIKE '%서효림%'
 
 -----------------------------------------
 
+-- 이지어드민 주문수집 여부 확인
+SELECT *
+FROM "EZ_Order"
+Order BY order_date desc
+LIMIT 10000
+
+
 -- 네이버 주문수집 여부 확인
 SELECT *
 FROM 		"naver_order_product" AS n
@@ -151,6 +179,17 @@ FROM "naver_order_product" AS o
 LEFT JOIN "naver_option" AS op ON (o."optionCode" = op."option_code")
 WHERE op."option_code" IS NULL 
 --AND o."deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
+
+
+-- 쿠팡 방어쿼리 (매핑 안된 옵션코드 있는지 확인)
+SELECT DISTINCT p."vendorItemName", p."vendorItemId", op."option"
+FROM "coupang_order" AS o,																
+		json_to_recordset(o."orderItems") as p(	
+			"vendorItemName" CHARACTER varying(255),																									
+			"vendorItemId" CHARACTER varying(255)											
+		)
+LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
+WHERE op."option" IS NULL 
 
 																						
 SELECT	y.yymm, y.yyww, o.yymmdd, o.product, o.shop_name,																								
@@ -295,7 +334,7 @@ from        (
                                         case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
                         from        purchase_term as t cross join "YMD2" as y 
                 )as t
-WHERE  yymmdd = '2023-04-19'
+WHERE  yymmdd = '2023-04-20'
 group BY yymm, yyww, yymmdd, product, shop
 order by yymmdd DESC
 
@@ -634,7 +673,7 @@ Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword de
 -- 날짜 오늘로 수정
 SELECT *
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-20') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-04-21') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_keyword_type
 
 
@@ -1244,10 +1283,56 @@ WHERE "ordererTel" NOT LIKE '010%'
 order_id =
 '2022031783418571'
 
+-- 중복 확인
+SELECT "option"
+FROM "coupang_option"
+GROUP BY "option"
+HAVING COUNT(*) > 1
+
+
+-- 누락 확인
+SELECT DISTINCT option_id, option_name, sales_type
+FROM "coupang_sales" AS s
+LEFT JOIN "coupang_option" AS op ON (s.option_id = op."option")
+WHERE op."option" IS NULL 
+
+
+SELECT SUM(net_sales_price), SUM(net_sales_cnt)
+FROM "coupang_sales" AS s
+LEFT JOIN "coupang_option" AS op ON (s.option_id = op."option")
+LEFT JOIN "product" AS p ON (op.product_no = p.no)
+WHERE account = 'A00197911' AND s.reg_date BETWEEN '2023-01-01' AND '2023-04-19'  --sales_type = '로켓그로스'
+
+-- 판매통계에서는 구매한 일자와 취소한 일자를 분리해서 보여주고,
+-- api에서는 구매 후 취소 되었으면 주문 api로 안보내주는 듯.
+
+
+-- 근데 부계정도 다운받아야 됨.
+
+
+
+SELECT *
+FROM "coupang_option"
+
+
+
+
 
 
 
 SELECT * FROM "order_batch"
+
+SELECT * FROM "ad_batch" LIMIT 10000
+WHERE Channel IS NULL 
+
+A. 검색_써큐시안_MO, *코큐텐
+브랜드형_써큐시안, 01. 오메가3
+# 써큐시안(고혈압), MO. 고혈압
+/P_03.루테콤
+
+SELECT * FROM "ad_mapping3" WHERE campaign = '브랜드형_써큐시안'
+
+'A. 검색_써큐시안_MO' 
 
 ---- 배치 테이블 스케줄링 쿼리문 ----
 
@@ -1349,5 +1434,6 @@ FROM "ad_view6"
 WHERE Channel = '쿠팡' AND yymmdd > '2022-09-30'
 GROUP BY yymm, yyww, yymmdd, channel, store, Product, owned_keyword_type, "keyword"
 Order BY yymmdd desc, channel, store, Product, owned_keyword_type
+
 
 	
