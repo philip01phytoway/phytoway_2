@@ -19,7 +19,7 @@ SELECT
 					END
 				ELSE ''
 			END AS brand_cust_type,
-			inflow_path
+			inflow_path, account
 			
 FROM 	(
 
@@ -39,7 +39,7 @@ SELECT
 				WHEN brand = '기타' THEN 'n'
 				ELSE 'y'
 			END AS phytoway,
-			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path
+			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path, '' AS account
 
 FROM 	(
 			SELECT	
@@ -150,7 +150,7 @@ SELECT
 				WHEN brand = '기타' THEN 'n'
 				ELSE 'y'
 			END AS phytoway,
-			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path
+			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path, '' AS account
 
 FROM 	(
 			SELECT	
@@ -278,7 +278,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			
 			"totalPaymentAmount", "expectedSettlementAmount",
 			
-			p.term, "decisionDate", n."inflowPath" AS inflow_path
+			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account
 			
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
@@ -332,7 +332,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			
 			"totalPaymentAmount" * -1 AS "totalPaymentAmount", "expectedSettlementAmount" * -1 AS "expectedSettlementAmount",
 			
-			p.term, "decisionDate", n."inflowPath" AS inflow_path
+			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account
 			
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
@@ -395,7 +395,7 @@ SELECT
 			
 			p."orderPrice" - p."discountPrice" AS "realPrice", 0 AS "expectedSettlementAmount", 
 			
-			pp.term, "confirmDate", '' AS inflow_path
+			pp.term, "confirmDate", '' AS inflow_path, '' AS account
 			
 FROM "coupang_order" AS o,																
 		json_to_recordset(o."orderItems") as p(																	
@@ -438,7 +438,7 @@ SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, order_date, order_date ||
 			END AS order_cnt, 
 			
 			gross AS price, gross AS price2, 
-			0 AS term, '' AS decide_date, '' AS inflow_path
+			0 AS term, '' AS decide_date, '' AS inflow_path, '' AS account
 FROM "b2b_gross" AS b
 LEFT JOIN "store" AS s ON (b.store_no = s.no)
 LEFT JOIN "product" AS p ON (b.product_no = p.no)
@@ -462,7 +462,7 @@ SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, "substring"((o.order_date
 				ELSE 'y'
 			END AS phytoway,
 			o.brand, o.nick, 1 AS product_qty, 1 AS order_qty, o.out_qty, 1 AS order_cnt,
-			o.amount AS price, o.supply_price, 0 AS term, '' AS decide_date, '' AS inflow_path
+			o.amount AS price, o.supply_price, 0 AS term, '' AS decide_date, '' AS inflow_path, '' AS account
 			
 FROM 	(
 			SELECT *, o.qty AS out_qty
@@ -494,6 +494,34 @@ WHERE
 
 UNION ALL 
 
+
+--b2b
+
+-- 쿠팡 제트배송
+SELECT 
+			'' AS KEY, '' AS order_id, '' AS order_status, s.reg_date AS order_date, s.reg_date || ' 00:00:00' AS order_date_time, '' AS order_name, '' AS cust_id, '' AS order_tel,
+			'' AS recv_name, '' AS recv_tel, '' AS recv_zip, '' AS recv_address,
+			
+			'쿠팡_제트배송' AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			p.brand, p.nick, op.qty AS product_qty, net_sales_cnt AS order_qty, op.qty * net_sales_cnt AS out_qty,
+			net_sales_cnt AS order_cnt, 
+			
+			net_sales_price AS price, 0 AS price2, 
+			0 AS term, '' AS decide_date, '' AS inflow_path, s.account
+FROM "coupang_sales" AS s
+LEFT JOIN "coupang_option" AS op ON (s.option_id = op."option")
+LEFT JOIN "product" AS p ON (op.product_no = p.no)
+WHERE sales_type = '로켓그로스'
+
+
+UNION ALL 
+
+
 --플레이오토
 SELECT 	order_name || order_tel AS KEY, '' AS order_id, '주문' as order_status, order_date, order_date || ' 00:00:00' AS order_date_time, order_name, '' AS cust_id, order_tel, 
 			order_name AS recv_name, order_tel AS recv_tel, order_zip AS recv_zip, '' AS recv_address, 
@@ -510,7 +538,7 @@ SELECT 	order_name || order_tel AS KEY, '' AS order_id, '주문' as order_status
 			ELSE -1
 			END AS order_cnt,
 			
-			order_price AS price, order_price AS price2, p.term, '' AS decide_date, '' AS inflow_path
+			order_price AS price, order_price AS price2, p.term, '' AS decide_date, '' AS inflow_path, '' AS account
 			
 FROM	"PA_Order2" as o 
 left join "Bundle" as b on (o.order_code = b.order_code)																					
