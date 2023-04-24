@@ -267,3 +267,7 @@ FROM "order4"
 WHERE brand = '판토모나' AND store = '스마트스토어' 
 AND order_date BETWEEN '2022-10-02' AND '2023-01-30' AND order_type = 'B2C'
 Order BY KEY, "주문일", "기간 내 구매횟수"
+
+
+
+SELECT * FROM "Naver_Custom_Order" WHERE yymmdd = '2023-04-23'
