@@ -29,7 +29,10 @@ FROM 	(
 
 -- 정상 주문
 SELECT 	
-			order_name || order_tel AS KEY,		
+			CASE 
+				WHEN order_tel LIKE '050%' THEN order_name || recv_zip
+				ELSE order_name || order_tel 
+			END AS KEY,		
 			order_id, '주문' as order_status, 
 
 			order_date, order_date_time, order_name, cust_id, order_tel,  recv_name, recv_tel, recv_zip, recv_address,
@@ -134,7 +137,10 @@ UNION ALL
 
 -- 취소 및 반품
 SELECT 	
-			order_name || order_tel AS KEY, 
+			CASE 
+				WHEN order_tel LIKE '050%' THEN order_name || recv_zip
+				ELSE order_name || order_tel 
+			END AS KEY,	
 			order_id, 
 
 			CASE 

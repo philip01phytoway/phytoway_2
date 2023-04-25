@@ -1,7 +1,17 @@
 
 -- 1. 네이버
 SELECT 	y.yymm, y.yyww, y.yymmdd, c.name AS channel, s.name AS store,        
-			p.brand, p.nick, 
+			
+			CASE 
+				WHEN p.brand IS NULL THEN '파이토웨이'
+				ELSE p.brand
+			END AS brand, 
+			
+			CASE 
+				WHEN p.nick IS NULL THEN '파이토웨이'
+				ELSE p.nick
+			END AS nick,
+			 
 			m.ad_account AS account, '검색광고' AS "ad_type", a."C" AS "campaign_type", a."I" AS imp_area, 
 			a."B" AS "campaign", a."D" AS "adgroup", a."G" AS "creative", 
 			
@@ -121,7 +131,18 @@ UNION ALL
 
 
 -- 4. 메타
-SELECT 	y.yymm, y.yyww, y.yymmdd, '메타' AS Channel, s.name AS store, p.brand, p.nick,
+SELECT 	y.yymm, y.yyww, y.yymmdd, '메타' AS Channel, s.name AS store, 
+
+			CASE 
+				WHEN p.brand IS NULL THEN '파이토웨이'
+				ELSE p.brand
+			END AS brand, 
+			
+			CASE 
+				WHEN p.nick IS NULL THEN '파이토웨이'
+				ELSE p.nick
+			END AS nick,
+
 			a.ad_account AS account, '' AS ad_type, '' AS  campaign_type, '' AS imp_area, 
 			a.campaign, a.adgroup, a.ad AS creative, '' AS owned_keyword, '' AS Keyword,
 			a.adcost AS cost, a.impression AS imp_cnt, a.click AS click_cnt, a."order" AS order_cnt, a.gross AS order_price,

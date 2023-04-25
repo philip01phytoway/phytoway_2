@@ -271,3 +271,201 @@ Order BY KEY, "주문일", "기간 내 구매횟수"
 
 
 SELECT * FROM "Naver_Custom_Order" WHERE yymmdd = '2023-04-23'
+
+SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-24'
+
+
+SELECT * 
+FROM "EZ_Order" 
+WHERE "options" LIKE '%온유%'
+Order BY order_date DESC
+
+
+SELECT * 
+FROM "order4" 
+WHERE store = '메디크로스랩'
+
+
+
+-- 크루즈팀 데이터 요청
+SELECT yymm, yyww, order_date, COUNT(DISTINCT key)
+FROM "order_batch" 
+WHERE all_cust_type = '신규' AND nick = '써큐시안'
+GROUP BY yymm, yyww, order_date
+
+
+
+
+SELECT *
+FROM "order_batch"
+WHERE order_id <> '' AND phytoway = 'y' 
+AND KEY IN (
+		
+	SELECT key
+	FROM "order_batch" 
+	WHERE all_cust_type = '신규' AND nick = '써큐시안'
+)
+Order BY KEY, order_date_time
+
+
+
+SELECT yymm, yyww, order_date, COUNT(DISTINCT KEY)
+FROM "order_batch"
+WHERE order_id <> '' AND phytoway = 'y' 
+AND KEY IN (
+		
+	SELECT key
+	FROM "order_batch" 
+	WHERE all_cust_type = '신규' AND nick = '써큐시안'
+)
+AND brand = '판토모나'
+GROUP BY yymm, yyww, order_date
+978
+
+
+		
+SELECT '2023-04-25' AS "누적기준일", '써큐시안' as brand, count(distinct KEY) AS "누적고객수", '써큐시안첫구매고객' AS type
+FROM "order_batch" 
+WHERE all_cust_type = '신규' AND nick = '써큐시안'
+
+UNION ALL 
+
+SELECT  '2023-04-25' AS "누적기준일", brand, cnt, type
+FROM 	(
+			SELECT '판토모나' AS brand, COUNT(DISTINCT KEY) AS cnt, '판토모나교차구매고객' AS type
+			FROM "order_batch"
+			WHERE order_id <> '' AND phytoway = 'y' 
+			AND KEY IN (
+					
+				SELECT key
+				FROM "order_batch" 
+				WHERE all_cust_type = '신규' AND nick = '써큐시안'
+			)
+			AND brand = '판토모나'
+			
+			UNION ALL 
+			
+			SELECT '판토모나하이퍼포머' AS nick, COUNT(DISTINCT KEY) AS cnt, '판토모나하이퍼포머교차구매고객' AS type
+			FROM "order_batch"
+			WHERE order_id <> '' AND phytoway = 'y' 
+			AND KEY IN (
+					
+				SELECT key
+				FROM "order_batch" 
+				WHERE all_cust_type = '신규' AND nick = '써큐시안'
+			)
+			AND nick = '판토모나하이퍼포머'
+			
+			UNION ALL 
+			
+			SELECT '판토모나맨' AS nick, COUNT(DISTINCT KEY) AS cnt, '판토모나맨교차구매고객' AS type
+			FROM "order_batch"
+			WHERE order_id <> '' AND phytoway = 'y' 
+			AND KEY IN (
+					
+				SELECT key
+				FROM "order_batch" 
+				WHERE all_cust_type = '신규' AND nick = '써큐시안'
+			)
+			AND nick = '판토모나맨' AND nick <> '판토모나하이퍼포머' 
+			
+			UNION ALL 
+			
+			SELECT '판토모나레이디' AS nick, COUNT(DISTINCT KEY) AS cnt, '판토모나레이디교차구매고객' AS type
+			FROM "order_batch"
+			WHERE order_id <> '' AND phytoway = 'y' 
+			AND KEY IN (
+					
+				SELECT key
+				FROM "order_batch" 
+				WHERE all_cust_type = '신규' AND nick = '써큐시안'
+			)
+			AND nick = '판토모나레이디' AND nick <> '판토모나하이퍼포머' AND nick <> '판토모나맨'
+		) AS t
+		
+		
+		
+	
+SELECT '2023-04-25' AS "누적기준일", '써큐시안' as brand, count(distinct KEY) AS "누적고객수", '써큐시안첫구매고객' AS type
+FROM "order_batch" 
+WHERE all_cust_type = '신규' AND nick = '써큐시안'
+
+UNION ALL 
+
+SELECT  '2023-04-25' AS "누적기준일", brand, cnt, type
+FROM 	(
+			SELECT '판토모나' AS brand, COUNT(DISTINCT KEY) AS cnt, '판토모나교차구매고객' AS type
+			FROM "order_batch"
+			WHERE order_id <> '' AND phytoway = 'y' 
+			AND KEY IN (
+					
+				SELECT key
+				FROM "order_batch" 
+				WHERE all_cust_type = '신규' AND nick = '써큐시안'
+			)
+			AND brand = '판토모나'
+			
+			UNION ALL 
+			
+			SELECT '판토모나하이퍼포머' AS nick, COUNT(DISTINCT KEY) AS cnt, '판토모나하이퍼포머교차구매고객' AS type
+			FROM "order_batch"
+			WHERE order_id <> '' AND phytoway = 'y' 
+			AND KEY IN (
+					
+				SELECT key
+				FROM "order_batch" 
+				WHERE all_cust_type = '신규' AND nick = '써큐시안'
+			)
+			AND nick = '판토모나하이퍼포머'
+			
+			UNION ALL 
+			
+			SELECT '판토모나맨' AS nick, COUNT(DISTINCT o.KEY) AS cnt, '판토모나맨교차구매고객' AS type
+			FROM "order_batch" AS o
+			LEFT JOIN (
+				SELECT DISTINCT KEY
+				FROM "order_batch"
+				WHERE nick = '판토모나하이퍼포머'
+			) AS p ON (o.key = p.key)
+			WHERE order_id <> '' AND phytoway = 'y' 
+			AND p.key IS NULL
+			AND o.KEY IN (
+					
+				SELECT key
+				FROM "order_batch" 
+				WHERE all_cust_type = '신규' AND nick = '써큐시안'
+			)
+			AND nick = '판토모나맨'
+			
+			UNION ALL 
+			
+			SELECT '판토모나레이디' AS nick, COUNT(DISTINCT o.KEY) AS cnt, '판토모나레이디교차구매고객' AS type
+			FROM "order_batch" AS o
+			LEFT JOIN (
+				SELECT DISTINCT KEY
+				FROM "order_batch"
+				WHERE nick = '판토모나하이퍼포머' OR nick = '판토모나맨'
+			) AS p ON (o.key = p.key)
+			WHERE order_id <> '' AND phytoway = 'y' 
+			AND p.key IS NULL
+			AND o.KEY IN (
+					
+				SELECT key
+				FROM "order_batch" 
+				WHERE all_cust_type = '신규' AND nick = '써큐시안'
+			)
+			AND nick = '판토모나레이디' 
+		) AS t
+
+
+SELECT yymm, yyww, order_date, order_date_time, KEY, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_address, store, brand, nick, product_qty, order_qty, out_qty, prd_amount_mod
+FROM "order_batch"
+WHERE order_id <> '' AND phytoway = 'y' 
+AND KEY IN (
+		
+	SELECT key
+	FROM "order_batch" 
+	WHERE all_cust_type = '신규' AND nick = '써큐시안'
+)
+AND brand = '판토모나'
+Order BY KEY, order_date

@@ -11,11 +11,9 @@ SELECT * FROM "Naver_Custom_Order" Order by yymmdd DESC LIMIT 1000
 SELECT * FROM "Naver_Search_Channel" Order by yymmdd DESC LIMIT 1000
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-20'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-24'
 
-
-SELECT * FROM "AD_Naver" WHERE reg_date >= '2023-04-11'
-
+SELECT yymmdd, SUM(cost) FROM "ad_batch" WHERE Channel = '네이버' GROUP BY yymmdd
 
 Order BY reg_date DESC LIMIT 5000
 
@@ -25,10 +23,12 @@ SELECT * FROM "Stock" Order BY yymmdd DESC
 -- 리뷰구매 리스트
 SELECT * FROM "Non_Order" Order BY yymmdd desc
 
+-- 쿠팡 판매통계 (제트배송) 계정 2개 모두.
+SELECT * FROM "coupang_sales" Order BY reg_date DESC LIMIT 1000
+
+
 -- 쿠팡 상품광고. 계정 2개 모두.
 SELECT * FROM "AD_Coupang" Order BY reg_date desc LIMIT 1000
-
-SELECT * FROM "AD_Coupang" WHERE account = 'A00350733' AND reg_date = '2023-04-20'
 
 
 -- 쿠팡 브랜드광고
@@ -138,7 +138,12 @@ FROM (
 			Order BY yymm DESC, yyww desc, yymmdd desc, c.name, s.name, p.nick, ad.campaign, ad.adgroup, ad.ad
 ) AS t
 
-SELECT * FROM "ad_mapping3" WHERE channel_no = 5
+
+SELECT * FROM "ad_meta"
+
+
+
+SELECT * FROM "ad_mapping3" WHERE channel_no = 4
 SELECT * FROM "ad_ga_utm" WHERE utm_content LIKE '%서효림%'
 
 -----------------------------------------
@@ -334,7 +339,7 @@ from        (
                                         case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
                         from        purchase_term as t cross join "YMD2" as y 
                 )as t
-WHERE  yymmdd = '2023-04-20'
+WHERE  yymmdd = '2023-04-24'
 group BY yymm, yyww, yymmdd, product, shop
 order by yymmdd DESC
 
@@ -673,7 +678,7 @@ Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword de
 -- 날짜 오늘로 수정
 SELECT *
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-21') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-04-25') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_keyword_type
 
 
@@ -1357,22 +1362,9 @@ INSERT INTO "content_batch" (yymm, yyww, yymmdd, channel, brand, nick, page_type
 SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price FROM "content_view3"
 
 
+SELECT * FROM "ad_batch" WHERE Channel = '네이버' AND nick = '파이토웨이'
 
-
-CREATE OR REPLACE PROCEDURE get_all_products()
-LANGUAGE SQL
-AS $$
-SELECT * FROM "product"
-$$
-
-
-
-CALL get_all_products();
-
-
-SELECT * FROM "keyword_view"
-
-SELECT * FROM "order_batch"
+SELECT * FROM "ad_batch" WHERE Channel IS NOT NULL AND nick IS null
 
 
 
@@ -1435,5 +1427,3 @@ WHERE Channel = '쿠팡' AND yymmdd > '2022-09-30'
 GROUP BY yymm, yyww, yymmdd, channel, store, Product, owned_keyword_type, "keyword"
 Order BY yymmdd desc, channel, store, Product, owned_keyword_type
 
-
-	
