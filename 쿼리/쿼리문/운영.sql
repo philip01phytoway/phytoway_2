@@ -469,3 +469,8 @@ AND KEY IN (
 )
 AND brand = '판토모나'
 Order BY KEY, order_date
+
+
+
+
+SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-24' AND id = 'zero2one3' Order BY "L" desc

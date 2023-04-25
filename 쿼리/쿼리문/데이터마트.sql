@@ -17,6 +17,8 @@ SELECT yymmdd, SUM(cost) FROM "ad_batch" WHERE Channel = '네이버' GROUP BY yy
 
 Order BY reg_date DESC LIMIT 5000
 
+SELECT * FROM "AD_Naver" LIMIT 1
+
 -- 재고
 SELECT * FROM "Stock" Order BY yymmdd DESC
 
