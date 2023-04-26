@@ -1,10 +1,3 @@
-SELECT *
-FROM "EZ_Order"
-WHERE order_date >= '2023-04-10'
-Order BY order_date
-
-
-
 -- 파이토웨이 계간지
 SELECT	order_id, '계간지, 공통삽지' AS 삽지, order_date_time
 from	"order3" AS o
@@ -38,37 +31,6 @@ Order BY order_date_time ASC, seq
 
 
 
--- 활동구간
-select 	seq, order_date, order_name, order_tel, recv_name, recv_tel, recv_zip, recv_address,
-		ez_channle_code, channel_id, channel_name, product_id, product_name, term, dead_date, product_qty, order_qty, price,
-		case when prev_order_date is null then 'new' else 'reorder' end as order_type
-from (
-			select	*,
-					lag(order_date, +1) over (partition by order_tel order by order_date, seq asc) as prev_order_date
-			from	"Order2"
-		)as o 
-where dead_date between '2022-03-10' and '2023-06-03' 
-AND product_name LIKE '%판토모나%'
-order by order_date ASC
-
-
-
--- 만료구간
-select 	seq, order_date, order_name, order_tel, recv_name, recv_tel, recv_zip, recv_address,
-		ez_channle_code, channel_id, channel_name, product_id, product_name, term, dead_date, product_qty, order_qty, price,
-		case when prev_order_date is null then 'new' else 'reorder' end as order_type
-from (
-select	*,
-					lag(order_date, +1) over (partition by order_tel order by order_date, seq asc) as prev_order_date
-			from	"Order2"
-)as o where dead_date between '2023-04-05' and '2023-05-03' order by order_date ASC
-
-
--- 문자발송
-select * from sms_send_log where reserved_date between '2023-04-12' and '2023-04-19'
-
-AND sms_content_title = '활성고객_판토모나'
-
 
 -- 마케팅 비용은 컨텐츠와 기타로 나뉨.
 -- 각각 보고서를 만들면 됨.
@@ -82,32 +44,6 @@ AND sms_content_title = '활성고객_판토모나'
 
 
 
-
-
---써큐시안 재구매 고객 db 3차. 2023-02-22
-SELECT *
-FROM  (
-		   select key, seq, order_name, zip, tel, Product, order_date,
-		   
-                     lag(product, -1) over(partition BY KEY Order BY seq) as product2,
-                     lag(order_date, -1) over(partition BY KEY Order BY seq) as order_date2,
-                     
-                     lag(product, -2) over(partition BY KEY Order BY seq) as product3,
-                     lag(order_date, -2) over(partition BY KEY Order BY seq) as order_date3,
-                     
-                     lag(product, -3) over(partition BY KEY Order BY seq) as product4,
-                     lag(order_date, -3) over(partition BY KEY Order BY seq) as order_date4,
-                     
-                     lag(product, -4) over(partition BY KEY Order BY seq) as product5,
-                     lag(order_date, -4) over(partition BY KEY Order BY seq) as order_date5                
-		   FROM   (
-                     select        key, seq, order_name, zip, tel, product || '_' || (product_qty * order_qty)::varchar(20) as Product, order_date
-                     from        customer_zip2
-               ) AS t
-      ) AS t                
-WHERE (key, seq) in (select key, min(seq) AS seq from customer_zip2 group by key)
-and Product LIKE  '%써큐시안%'
-Order BY order_date, KEY
 
 
 옵션별 이지어드민 상품코드를 Bundle 테이블 매핑 후 Bundle 테이블에 Product 테이블을 매핑하고 있기 때문에
@@ -187,60 +123,7 @@ prd_amount도 중복으로 찍힌다.
 이거 정확히 알아놔야 대처할 수 있을 거 같은데.
 
 
---써큐시안 3개입을 딱 1번 구매했으면서, 2023년 3월 8일 기준 6개월 이전에 구매한 고객
-SELECT * 
-FROM "customer_zip4" 
-WHERE KEY in
-			(
-				SELECT key
-				FROM "customer_zip4" 
-				WHERE Product = '써큐시안' AND order_qty * product_qty = 3 AND shop <> '자사몰'
-				GROUP BY KEY
-				HAVING COUNT(*) = 1
-			)
-AND order_date > '2022-09-08' AND Product = '써큐시안' AND order_qty * product_qty = 3 AND shop <> '자사몰'
-Order BY order_date, key
 
-
---써큐시안 3개입을 딱 2번 구매했으면서, 
--- 마지막 구매가 2023년 3월 8일 기준 6개월 이전에 구매한 고객
-SELECT *
-FROM 	(
-			SELECT	*, rank() over(partition BY KEY Order BY seq) AS rank
-			FROM 		"customer_zip4" 
-			WHERE KEY in
-						(
-							SELECT key
-							FROM "customer_zip4" 
-							WHERE Product = '써큐시안' AND order_qty * product_qty = 3 AND shop <> '자사몰'
-							GROUP BY KEY
-							HAVING COUNT(*) = 2
-						)
-					AND  Product = '써큐시안' AND order_qty * product_qty = 3 AND shop <> '자사몰'
-		) AS t
-WHERE rank = 2 AND order_date > '2022-09-08'
-Order BY order_date, KEY 
-
-
---써큐시안 3개입을 3회 이상  구매했으면서, 
--- 마지막 구매가 2023년 3월 8일 기준 6개월 이전에 구매한 고객
-SELECT MAX(order_date) AS order_date, KEY, MAX(order_name) AS order_name,  MIN(tel) AS tel, MAX(zip) AS zip, MAX(brand) AS brand, MAX(Product) AS Product, shop, MAX(price) AS price, MAX(seq) AS seq, MAX(order_qty) AS order_qty, MAX(product_qty) AS product_qty, MAX(term) AS term, MAX(rank) AS max_rank
-FROM 	(
-			SELECT	*, rank() over(partition BY KEY Order BY seq) AS rank
-			FROM 		"customer_zip4" 
-			WHERE KEY in
-						(
-							SELECT key
-							FROM "customer_zip4" 
-							WHERE Product = '써큐시안' AND order_qty * product_qty = 3 AND shop <> '자사몰'
-							GROUP BY KEY
-							HAVING COUNT(*) >= 3
-						)
-					AND  Product = '써큐시안' AND order_qty * product_qty = 3 AND shop <> '자사몰'
-		) AS t
-WHERE rank >= 3 AND order_date > '2022-09-08'
-GROUP BY KEY, shop
-Order BY order_date, KEY
 
 
 SELECT max_rank, COUNT(*)
@@ -260,217 +143,309 @@ GROUP BY max_rank
 
 
 
--- 크루즈팀 데이터 요청. 판토모나 고객 db. 2023-03-30
-SELECT KEY, order_name AS "구매자명", order_date AS "주문일", order_tel AS "구매자 전화번호", cust_id AS "구매자 ID", recv_name AS "수령자명", recv_tel AS "수령자 전화번호", recv_address AS "수령지 주소", product_name AS "제품명", product_qty, order_qty, out_qty,
-			rank() over(partition BY KEY Order BY order_date) AS "기간 내 구매횟수"
-FROM "order4"
-WHERE brand = '판토모나' AND store = '스마트스토어' 
-AND order_date BETWEEN '2022-10-02' AND '2023-01-30' AND order_type = 'B2C'
-Order BY KEY, "주문일", "기간 내 구매횟수"
+
+SELECT * FROM "cost_marketing"
+
+SELECT * FROM "cost_product"
 
 
 
-SELECT * FROM "Naver_Custom_Order" WHERE yymmdd = '2023-04-23'
-
-SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-24'
-
-
-SELECT * 
-FROM "EZ_Order" 
-WHERE "options" LIKE '%온유%'
-Order BY order_date DESC
-
-
-SELECT * 
-FROM "order4" 
-WHERE store = '메디크로스랩'
-
-
-
--- 크루즈팀 데이터 요청
-SELECT yymm, yyww, order_date, COUNT(DISTINCT key)
+SELECT DISTINCT key
 FROM "order_batch" 
-WHERE all_cust_type = '신규' AND nick = '써큐시안'
-GROUP BY yymm, yyww, order_date
+WHERE all_cust_type = '신규' AND order_date >= '2022-10-01' 
 
 
 
 
-SELECT *
-FROM "order_batch"
-WHERE order_id <> '' AND phytoway = 'y' 
-AND KEY IN (
+
+WITH raw AS (
+	SELECT order_name || cust_id AS key, * 
+	FROM "EZ_Order" AS o,																		
+			jsonb_to_recordset(o.order_products) as p(																	
+				name character varying(255),																
+				product_id character varying(255),																
+				qty integer, 
+				prd_amount integer															
+			)
+	LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
+	LEFT JOIN "product" as pp on (b.product_no = pp.no)				
+	WHERE order_date >= '2022-10-01' AND order_name || cust_id <> '' AND cust_id <> ''
+	AND order_name || cust_id IN (
 		
-	SELECT key
-	FROM "order_batch" 
-	WHERE all_cust_type = '신규' AND nick = '써큐시안'
+		SELECT DISTINCT key
+		FROM "order_batch" 
+		WHERE all_cust_type = '신규' AND order_date >= '2022-10-01' 
+	)
 )
-Order BY KEY, order_date_time
 
 
-
-SELECT yymm, yyww, order_date, COUNT(DISTINCT KEY)
-FROM "order_batch"
-WHERE order_id <> '' AND phytoway = 'y' 
-AND KEY IN (
-		
-	SELECT key
-	FROM "order_batch" 
-	WHERE all_cust_type = '신규' AND nick = '써큐시안'
-)
-AND brand = '판토모나'
-GROUP BY yymm, yyww, order_date
-978
+SELECT  	*, 
+		 	CASE 
+			 	WHEN product_id IN ('00206', '00207', '00208', '00214') THEN 1
+		 		ELSE 0
+		 	END AS pamphlet 
+FROM "raw"
 
 
-		
-SELECT '2023-04-25' AS "누적기준일", '써큐시안' as brand, count(distinct KEY) AS "누적고객수", '써큐시안첫구매고객' AS type
-FROM "order_batch" 
-WHERE all_cust_type = '신규' AND nick = '써큐시안'
+SELECT * FROM "order_batch"
+WHERE store = '스마트스토어_풀필먼트' AND brand = '판토모나' AND order_date BETWEEN '2023-04-19' AND '2023-04-25'
 
-UNION ALL 
+DENSE_RANK() over (partition BY KEY Order BY order_id) AS cnt,
 
-SELECT  '2023-04-25' AS "누적기준일", brand, cnt, type
+
+주문일 이후 4개월 이내에 써큐시안 브랜드 재구매를 했느냐 안했느냐를 알아야 함.
+
+
+-- 실험군_1개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
 FROM 	(
-			SELECT '판토모나' AS brand, COUNT(DISTINCT KEY) AS cnt, '판토모나교차구매고객' AS type
-			FROM "order_batch"
-			WHERE order_id <> '' AND phytoway = 'y' 
-			AND KEY IN (
-					
-				SELECT key
-				FROM "order_batch" 
-				WHERE all_cust_type = '신규' AND nick = '써큐시안'
-			)
-			AND brand = '판토모나'
-			
-			UNION ALL 
-			
-			SELECT '판토모나하이퍼포머' AS nick, COUNT(DISTINCT KEY) AS cnt, '판토모나하이퍼포머교차구매고객' AS type
-			FROM "order_batch"
-			WHERE order_id <> '' AND phytoway = 'y' 
-			AND KEY IN (
-					
-				SELECT key
-				FROM "order_batch" 
-				WHERE all_cust_type = '신규' AND nick = '써큐시안'
-			)
-			AND nick = '판토모나하이퍼포머'
-			
-			UNION ALL 
-			
-			SELECT '판토모나맨' AS nick, COUNT(DISTINCT KEY) AS cnt, '판토모나맨교차구매고객' AS type
-			FROM "order_batch"
-			WHERE order_id <> '' AND phytoway = 'y' 
-			AND KEY IN (
-					
-				SELECT key
-				FROM "order_batch" 
-				WHERE all_cust_type = '신규' AND nick = '써큐시안'
-			)
-			AND nick = '판토모나맨' AND nick <> '판토모나하이퍼포머' 
-			
-			UNION ALL 
-			
-			SELECT '판토모나레이디' AS nick, COUNT(DISTINCT KEY) AS cnt, '판토모나레이디교차구매고객' AS type
-			FROM "order_batch"
-			WHERE order_id <> '' AND phytoway = 'y' 
-			AND KEY IN (
-					
-				SELECT key
-				FROM "order_batch" 
-				WHERE all_cust_type = '신규' AND nick = '써큐시안'
-			)
-			AND nick = '판토모나레이디' AND nick <> '판토모나하이퍼포머' AND nick <> '판토모나맨'
-		) AS t
-		
-		
-		
-	
-SELECT '2023-04-25' AS "누적기준일", '써큐시안' as brand, count(distinct KEY) AS "누적고객수", '써큐시안첫구매고객' AS type
-FROM "order_batch" 
-WHERE all_cust_type = '신규' AND nick = '써큐시안'
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 60)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE brand_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 1 
+								AND order_date BETWEEN '2022-04-02' AND '2022-06-07'	
+						)
+						AND brand = '써큐시안'
+					) AS t
+		) AS tt
 
-UNION ALL 
+) AS ttt
+WHERE reorder = '재구매'
 
-SELECT  '2023-04-25' AS "누적기준일", brand, cnt, type
+
+
+
+
+-- 실험군_3개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
 FROM 	(
-			SELECT '판토모나' AS brand, COUNT(DISTINCT KEY) AS cnt, '판토모나교차구매고객' AS type
-			FROM "order_batch"
-			WHERE order_id <> '' AND phytoway = 'y' 
-			AND KEY IN (
-					
-				SELECT key
-				FROM "order_batch" 
-				WHERE all_cust_type = '신규' AND nick = '써큐시안'
-			)
-			AND brand = '판토모나'
-			
-			UNION ALL 
-			
-			SELECT '판토모나하이퍼포머' AS nick, COUNT(DISTINCT KEY) AS cnt, '판토모나하이퍼포머교차구매고객' AS type
-			FROM "order_batch"
-			WHERE order_id <> '' AND phytoway = 'y' 
-			AND KEY IN (
-					
-				SELECT key
-				FROM "order_batch" 
-				WHERE all_cust_type = '신규' AND nick = '써큐시안'
-			)
-			AND nick = '판토모나하이퍼포머'
-			
-			UNION ALL 
-			
-			SELECT '판토모나맨' AS nick, COUNT(DISTINCT o.KEY) AS cnt, '판토모나맨교차구매고객' AS type
-			FROM "order_batch" AS o
-			LEFT JOIN (
-				SELECT DISTINCT KEY
-				FROM "order_batch"
-				WHERE nick = '판토모나하이퍼포머'
-			) AS p ON (o.key = p.key)
-			WHERE order_id <> '' AND phytoway = 'y' 
-			AND p.key IS NULL
-			AND o.KEY IN (
-					
-				SELECT key
-				FROM "order_batch" 
-				WHERE all_cust_type = '신규' AND nick = '써큐시안'
-			)
-			AND nick = '판토모나맨'
-			
-			UNION ALL 
-			
-			SELECT '판토모나레이디' AS nick, COUNT(DISTINCT o.KEY) AS cnt, '판토모나레이디교차구매고객' AS type
-			FROM "order_batch" AS o
-			LEFT JOIN (
-				SELECT DISTINCT KEY
-				FROM "order_batch"
-				WHERE nick = '판토모나하이퍼포머' OR nick = '판토모나맨'
-			) AS p ON (o.key = p.key)
-			WHERE order_id <> '' AND phytoway = 'y' 
-			AND p.key IS NULL
-			AND o.KEY IN (
-					
-				SELECT key
-				FROM "order_batch" 
-				WHERE all_cust_type = '신규' AND nick = '써큐시안'
-			)
-			AND nick = '판토모나레이디' 
-		) AS t
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 180)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE brand_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 3
+								AND order_date BETWEEN '2022-04-02' AND '2022-06-07'	
+						)
+						AND brand = '써큐시안'
+					) AS t
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'
 
 
-SELECT yymm, yyww, order_date, order_date_time, KEY, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_address, store, brand, nick, product_qty, order_qty, out_qty, prd_amount_mod
+
+
+-- 대조군1_1개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 60)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE brand_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 1
+								AND order_date BETWEEN '2022-02-01' AND '2022-03-31'	
+						)
+						AND brand = '써큐시안'
+					) AS t
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'
+
+
+
+-- 대조군1_3개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 180)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE brand_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 3
+								AND order_date BETWEEN '2022-02-01' AND '2022-03-31'	
+						)
+						AND brand = '써큐시안'
+					) AS t
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'
+
+
+
+
+-- 대조군2_1개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 60)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE brand_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 1
+								AND order_date BETWEEN '2022-07-01' AND '2022-08-31'		
+						)
+						AND brand = '써큐시안'
+					) AS t
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'
+
+
+
+
+-- 대조군2_3개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 180)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE brand_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 3
+								AND order_date BETWEEN '2022-07-01' AND '2022-08-31'	
+						)
+						AND brand = '써큐시안'
+					) AS t
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'
+
+
+
+-- 대조군 1
+SELECT 
+			DENSE_RANK() over (partition BY KEY Order BY order_id) AS cnt,
+			*,
+			to_char(CASE 
+							WHEN order_qty * product_qty * term * 1.2 > 365 THEN order_date::date + interval '1 day' * 365 
+							ELSE order_date::date + interval '1 day' * order_qty * product_qty * term * 1.2 END, 
+						'yyyy-mm-dd') AS dead_date
+			
 FROM "order_batch"
-WHERE order_id <> '' AND phytoway = 'y' 
-AND KEY IN (
-		
-	SELECT key
-	FROM "order_batch" 
-	WHERE all_cust_type = '신규' AND nick = '써큐시안'
+WHERE KEY IN (
+		SELECT DISTINCT key
+		FROM "order_batch"
+		WHERE all_cust_type = '신규'
+		AND order_date BETWEEN '2022-11-14' AND '2022-11-18'
 )
-AND brand = '판토모나'
-Order BY KEY, order_date
+
+
+
+-- 대조군 2
+SELECT 
+			DENSE_RANK() over (partition BY KEY Order BY order_id) AS cnt,
+			*,
+			to_char(CASE 
+							WHEN order_qty * product_qty * term * 1.2 > 365 THEN order_date::date + interval '1 day' * 365 
+							ELSE order_date::date + interval '1 day' * order_qty * product_qty * term * 1.2 END, 
+						'yyyy-mm-dd') AS dead_date
+			
+FROM "order_batch"
+WHERE KEY IN (
+		SELECT DISTINCT key
+		FROM "order_batch"
+		WHERE all_cust_type = '신규'
+		AND order_date BETWEEN '2022-11-28' AND '2022-12-02'
+)
 
 
 
 
-SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-24' AND id = 'zero2one3' Order BY "L" desc
+
+
+
+
+SELECT SUM(prd_amount_mod)
+FROM "order_batch"
+WHERE all_cust_type = '신규'
+
+row_number : 17,882,566,433
+rank : 18,176,049,389
+
+
+
+SELECT SUM(prd_amount_mod)
+FROM "order_batch"
+WHERE order_id IN 
+(
+SELECT order_id
+FROM "order_batch"
+WHERE all_cust_type = '신규' AND order_status = '주문'
+GROUP BY order_id
+HAVING COUNT(*) > 1
+)

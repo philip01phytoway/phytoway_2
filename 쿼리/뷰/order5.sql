@@ -5,7 +5,7 @@ SELECT
 			CASE 
 				WHEN order_id <> '' AND phytoway = 'y' THEN
 					CASE 
-						WHEN ROW_NUMBER() OVER (PARTITION BY t.key ORDER BY t.order_id) = 1 THEN '신규'
+						WHEN RANK() OVER (PARTITION BY t.key ORDER BY t.order_id) = 1 THEN '신규'
 						ELSE '재구매'
 					END
 				ELSE ''
@@ -14,7 +14,7 @@ SELECT
 			CASE 
 				WHEN order_id <> '' AND phytoway = 'y' THEN
 					CASE 
-						WHEN ROW_NUMBER() OVER (PARTITION BY t.key, brand ORDER BY t.order_id) = 1 THEN '신규'
+						WHEN RANK() OVER (PARTITION BY t.key, brand ORDER BY t.order_id) = 1 THEN '신규'
 						ELSE '재구매'
 					END
 				ELSE ''

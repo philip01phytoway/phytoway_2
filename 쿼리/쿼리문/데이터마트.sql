@@ -7,17 +7,20 @@
 -- 사용자정의채널
 SELECT * FROM "Naver_Custom_Order" Order by yymmdd DESC LIMIT 1000
 
+-- 자동화 검증
+SELECT SUM(customer_cnt), SUM(inflow_cnt), sum(page_cnt), SUM(order_cnt), SUM(order_price) FROM "Naver_Custom_Order" WHERE yymmdd = '2023-04-25'
+
+
 -- 검색채널
 SELECT * FROM "Naver_Search_Channel" Order by yymmdd DESC LIMIT 1000
 
+SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-25'
+
+
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-24'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-25'
 
-SELECT yymmdd, SUM(cost) FROM "ad_batch" WHERE Channel = '네이버' GROUP BY yymmdd
-
-Order BY reg_date DESC LIMIT 5000
-
-SELECT * FROM "AD_Naver" LIMIT 1
+SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
 
 -- 재고
 SELECT * FROM "Stock" Order BY yymmdd DESC
@@ -341,7 +344,7 @@ from        (
                                         case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
                         from        purchase_term as t cross join "YMD2" as y 
                 )as t
-WHERE  yymmdd = '2023-04-24'
+WHERE  yymmdd = '2023-04-25'
 group BY yymm, yyww, yymmdd, product, shop
 order by yymmdd DESC
 
@@ -666,7 +669,7 @@ FROM 	(
 			  	WHERE ((cb.reg_date)::text <> ''::text)
 			  	GROUP BY y.yyww, y.yymm, y.yymmdd, cb.product2_id, p.brand, p.nick, cb.account, cb.campaign, cb.ad_group, cb.impression_keyword
 		) AS t
-WHERE yymmdd >= '2022-10-01'
+WHERE yymmdd >= '2023-02-01'
 Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword desc
 
 
@@ -680,7 +683,7 @@ Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword de
 -- 날짜 오늘로 수정
 SELECT *
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-25') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2023-01-01' AND '2023-04-26') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_keyword_type
 
 
@@ -688,7 +691,7 @@ Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_k
 SELECT 	yymm, yyww, yymmdd, Channel, brand, nick, page_type, owned_keyword_type, --Keyword, id,
 			SUM(cost1) AS cost1, sum(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-19') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-04-26') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 GROUP BY yymm, yyww, yymmdd, Channel, brand, nick, page_type, owned_keyword_type--, Keyword, id
 Order BY yymm desc, yyww desc, yymmdd DESC, Channel, brand, nick, page_type, owned_keyword_type--, keyword
 
@@ -1369,7 +1372,6 @@ SELECT * FROM "ad_batch" WHERE Channel = '네이버' AND nick = '파이토웨이
 SELECT * FROM "ad_batch" WHERE Channel IS NOT NULL AND nick IS null
 
 
-
 -- 고객 시트 > 전체 탭																			
 select	y.yymm, y.yyww, y.yymmdd, new_cnt,																				
 		sum(new_cnt) over (order by t1.order_date asc) as tot_cnt,																			
@@ -1428,4 +1430,6 @@ FROM "ad_view6"
 WHERE Channel = '쿠팡' AND yymmdd > '2022-09-30'
 GROUP BY yymm, yyww, yymmdd, channel, store, Product, owned_keyword_type, "keyword"
 Order BY yymmdd desc, channel, store, Product, owned_keyword_type
+
+
 
