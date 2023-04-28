@@ -86,7 +86,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yyww = '2023-16'
+where	yyww = '2023-17'
 group by yyww
 order by yyww ASC
 
@@ -1075,7 +1075,7 @@ from	(
 					case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
 			from	purchase_term as t cross join "YMD2" as y 
 		)as t
-where	yyww = '2023-16'
+where	yyww = '2023-17'
 group by yyww, yymmdd
 order by yyww, yymmdd ASC
 
@@ -1114,6 +1114,7 @@ FROM 	(
 														LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::TEXT)))
 														LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
 													)
+												WHERE pp.term > 0
 											) AS o
 									LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 									WHERE 
@@ -1169,6 +1170,7 @@ FROM 	(
 														LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::TEXT)))
 														LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
 													)
+												WHERE pp.term > 0
 											) AS o
 									LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 									WHERE 
@@ -1224,6 +1226,7 @@ FROM 	(
 														LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::TEXT)))
 														LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
 													)
+												WHERE pp.term > 0
 											) AS o
 									LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 									WHERE 
@@ -1279,6 +1282,7 @@ FROM 	(
 														LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::TEXT)))
 														LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
 													)
+												WHERE pp.term > 0
 											) AS o
 									LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 									WHERE 
@@ -1334,6 +1338,7 @@ FROM 	(
 														LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::TEXT)))
 														LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
 													)
+												WHERE pp.term > 0
 											) AS o
 									LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 									WHERE 
@@ -1390,6 +1395,7 @@ FROM 	(
 														LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::TEXT)))
 														LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
 													)
+												WHERE pp.term > 0
 											) AS o
 									LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 									WHERE 
@@ -1415,7 +1421,7 @@ FROM 	(
 			WHERE nick LIKE '%판토모나%' OR nick LIKE '%페미론큐%'
 			GROUP BY yymm, yyww, yymmdd, store, nick
 		) AS t2
-WHERE t2.yyww = '2023-16'
+WHERE t2.yyww = '2023-17'
 Order BY yyww
 
 
@@ -1485,6 +1491,6 @@ FROM 	(
 			HAVING brand = '판토모나' OR brand = '페미론큐'
 			--Order BY y.yymmdd DESC	
 		) AS t
-WHERE t.yyww = '2023-16'
+WHERE t.yyww = '2023-17'
 Order BY t.yyww	
 

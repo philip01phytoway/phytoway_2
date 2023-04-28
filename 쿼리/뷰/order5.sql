@@ -478,6 +478,7 @@ FROM 	(
 					LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::TEXT)))
 					LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
 				)
+			WHERE pp.term > 0
 		) AS o
 LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 WHERE 

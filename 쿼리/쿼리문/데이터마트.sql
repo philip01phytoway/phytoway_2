@@ -165,13 +165,22 @@ LIMIT 10000
 
 
 -- 네이버 주문수집 여부 확인
-SELECT *
+SELECT 	"paymentDate", *
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")
 WHERE 	"paymentDate" IS NOT NULL 
 Order BY "paymentDate" DESC
 LIMIT 10000
+
+
+-- 쿠팡 주문수집 여부 확인
+SELECT *
+FROM "coupang_order"
+WHERE "orderedAt" IS NOT NULL
+Order BY "orderedAt" DESC
+LIMIT 10000
+
 
 --총매출
 SELECT yymm, yyww, yymmdd, product_name, store, SUM(price) AS price, SUM(order_cnt) AS order_cnt, SUM(out_qty) AS out_qty
@@ -344,7 +353,7 @@ from        (
                                         case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
                         from        purchase_term as t cross join "YMD2" as y 
                 )as t
-WHERE  yymmdd = '2023-04-25'
+WHERE  yymmdd = '2023-04-26'
 group BY yymm, yyww, yymmdd, product, shop
 order by yymmdd DESC
 
@@ -389,6 +398,7 @@ FROM 	(
 											LEFT JOIN "bundle" as b ON (((p.product_id)::text = (b.ez_code)::TEXT)))
 											LEFT JOIN "product" as pp ON ((b.product_no = pp.no)
 										)
+									WHERE pp.term > 0
 								) AS o
 						LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 						WHERE 
@@ -683,7 +693,7 @@ Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword de
 -- 날짜 오늘로 수정
 SELECT *
 FROM "content_view3"
-WHERE (yymmdd between '2023-01-01' AND '2023-04-26') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2023-01-01' AND '2023-04-27') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_keyword_type
 
 
@@ -1343,6 +1353,10 @@ A. 검색_써큐시안_MO, *코큐텐
 SELECT * FROM "ad_mapping3" WHERE campaign = '브랜드형_써큐시안'
 
 'A. 검색_써큐시안_MO' 
+
+
+SELECT * FROM "order_batch" WHERE store IS NULL
+
 
 ---- 배치 테이블 스케줄링 쿼리문 ----
 
