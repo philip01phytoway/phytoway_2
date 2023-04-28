@@ -31,6 +31,10 @@ SELECT * FROM "Non_Order" Order BY yymmdd desc
 -- 쿠팡 판매통계 (제트배송) 계정 2개 모두.
 SELECT * FROM "coupang_sales" Order BY reg_date DESC LIMIT 1000
 
+SELECT * FROM "coupang_sales" WHERE reg_date = '2023-04-27' AND account <> 'A00197911'
+
+
+
 
 -- 쿠팡 상품광고. 계정 2개 모두.
 SELECT * FROM "AD_Coupang" Order BY reg_date desc LIMIT 1000

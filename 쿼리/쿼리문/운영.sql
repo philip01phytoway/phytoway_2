@@ -164,3 +164,13 @@ DENSE_RANK() over (partition BY KEY Order BY order_id) AS cnt,
 
 주문일 이후 4개월 이내에 써큐시안 브랜드 재구매를 했느냐 안했느냐를 알아야 함.
 
+
+
+SELECT DISTINCT option_id
+FROM "coupang_sales"
+WHERE account = 'A00197911'
+
+
+SELECT *
+FROM "coupang_sales"
+LIMIT 1
