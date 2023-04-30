@@ -174,3 +174,7 @@ WHERE account = 'A00197911'
 SELECT *
 FROM "coupang_sales"
 LIMIT 1
+
+order_name LIKE '%권혁민%'
+
+SELECT * FROM ""
