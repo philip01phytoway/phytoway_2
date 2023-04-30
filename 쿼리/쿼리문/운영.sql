@@ -178,3 +178,6 @@ LIMIT 1
 order_name LIKE '%권혁민%'
 
 SELECT * FROM ""
+
+
+SELECT * FROM "ad_ga_aw"
