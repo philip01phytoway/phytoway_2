@@ -50,8 +50,10 @@ SELECT * FROM "ad_google3" Order BY reg_date DESC
 광고그룹 id가 광고보고서에는 있는데 매핑 테이블에는 없는지
 
 -- 구글 애널리틱스 광고그룹별
-SELECT * FROM "ad_ga_aw" Order BY reg_date DESC
+SELECT * FROM "ad_ga_aw" Order BY reg_date DESC 
 매핑 누락 확인 필요
+
+SELECT * FROM "ad_ga_aw" WHERE reg_date > '2023-04-27'
 
 -- 구글 애널리틱스 utm_campaign별
 SELECT * FROM "ad_ga_utm" Order BY reg_date DESC
