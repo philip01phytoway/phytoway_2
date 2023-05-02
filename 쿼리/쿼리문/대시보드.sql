@@ -18,50 +18,22 @@ order by yymmdd
 
 
 
-
+-- fn_gross_forecast2 수정하였음.
 select	order_date::varchar(100) as yymmdd, sum(prd_amount_mod) as gross
 from	"order_batch"
-WHERE order_date < CURRENT_DATE::varchar(100)
+WHERE order_date < CURRENT_DATE::varchar(100) AND phytoway = 'y'
 group by order_date
 order by order_date;
 
 
+-- 일자별 매출
+SELECT order_date, SUM(prd_amount_mod)
+FROM "order_batch"
+WHERE phytoway = 'y'
+GROUP BY order_date
+Order BY order_date DESC
 
 
+SELECT * FROM "Target"
+WHERE yymmdd >= '2023-05-01'
 
-
-BEGIN
-CREATE TEMP TABLE IF NOT EXISTS temp_rev_projection AS
-	
-		select	order_date::varchar(100) as yymmdd, sum(prd_amount_mod) as gross
-		from	"order_batch"
-		WHERE order_date < CURRENT_DATE::varchar(100)
-		group by order_date
-		order by order_date;
-	
-FOR i IN 1 .. periods
-    LOOP
-        INSERT INTO temp_rev_projection
-            SELECT (
-              SELECT MAX(a.yymmdd::date) + INTERVAL '1 day'
-              FROM temp_rev_projection a
-           ) AS yymmdd,
-           (
-               SELECT SUM(t.gross) 
-               FROM (
-                   SELECT * 
-                   FROM temp_rev_projection
-                   ORDER BY yymmdd DESC 
-                   LIMIT periods
-               ) t
-           ) / periods AS gross;
-    END LOOP;
- 
- RETURN QUERY EXECUTE 'select yymmdd::varchar(10), gross::integer from temp_rev_projection';
- 
- DROP TABLE temp_rev_projection;
-END
-
-
-
-SELECT CURRENT_DATE::text AS today
