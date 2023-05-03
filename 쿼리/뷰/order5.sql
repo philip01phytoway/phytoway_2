@@ -415,7 +415,7 @@ FROM "coupang_order" AS o,
 		)
 LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
 LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
-WHERE o."orderId"::text NOT IN (SELECT order_num FROM "Non_Order")
+WHERE o."orderId"::TEXT NOT IN (SELECT order_num FROM "Non_Order")
 AND "cancelCount" = 0	
 
 

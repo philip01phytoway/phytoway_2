@@ -18,7 +18,7 @@ SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-25'
 
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-04-25'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-02'
 
 SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
 
@@ -37,11 +37,11 @@ SELECT * FROM "coupang_sales" WHERE reg_date = '2023-04-27' AND account <> 'A001
 
 
 -- 쿠팡 상품광고. 계정 2개 모두.
-SELECT * FROM "AD_Coupang" Order BY reg_date desc LIMIT 1000
+SELECT * FROM "AD_Coupang" Order BY reg_date desc LIMIT 10000
 
 
 -- 쿠팡 브랜드광고
-SELECT * FROM "AD_CoupangBrand" Order BY reg_date DESC LIMIT 1000
+SELECT * FROM "AD_CoupangBrand" Order BY reg_date DESC LIMIT 10000
 
 -- 구글 광고
 SELECT * FROM "ad_google3" Order BY reg_date DESC
@@ -164,7 +164,7 @@ SELECT * FROM "ad_ga_utm" WHERE utm_content LIKE '%서효림%'
 -----------------------------------------
 
 -- 이지어드민 주문수집 여부 확인
-SELECT *
+SELECT order_date, *
 FROM "EZ_Order"
 Order BY order_date desc
 LIMIT 10000
@@ -181,7 +181,7 @@ LIMIT 10000
 
 
 -- 쿠팡 주문수집 여부 확인
-SELECT *
+SELECT "orderedAt", *
 FROM "coupang_order"
 WHERE "orderedAt" IS NOT NULL
 Order BY "orderedAt" DESC
@@ -359,7 +359,7 @@ from        (
                                         case when EXTRACT(ISODOW FROM yymmdd::date) = 2 and yymmdd between to_char(dead_date::date + interval '1 day' * 1, 'yyyy-mm-dd') and to_char(dead_date::date + interval '1 day' * 7, 'yyyy-mm-dd') then 1 else 0 end as out_cnt -- 이탈고객(W+1)
                         from        purchase_term as t cross join "YMD2" as y 
                 )as t
-WHERE  yymmdd = '2023-04-26'
+WHERE  yymmdd = '2023-05-02'
 group BY yymm, yyww, yymmdd, product, shop
 order by yymmdd DESC
 
@@ -520,6 +520,11 @@ FROM 	(
 			GROUP BY yymm, yyww, yymmdd, channel, store, Product, owned_keyword_type
 		) AS t
 Order BY yymmdd desc, channel, store, Product, owned_keyword_type
+
+
+SELECT SUM(adcost)
+FROM "ad_view6"
+WHERE yymm = '2022-11'
 
 
 
@@ -699,7 +704,7 @@ Order BY yymmdd DESC, account, ad_type desc, owned_keyword_type desc, Keyword de
 -- 날짜 오늘로 수정
 SELECT *
 FROM "content_view3"
-WHERE (yymmdd between '2023-01-01' AND '2023-04-27') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2023-01-01' AND '2023-05-02') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_keyword_type
 
 
@@ -991,7 +996,7 @@ FROM
 								case when p.order_cs = 0 then p.prd_amount else p.prd_amount * -1 end as prd_amount,		
 								case when p.order_cs = 0 then 1 else -1 end as order_cnt,		
 								case when p.order_cs = 0 then b.qty * p.qty else (b.qty * p.qty) * -1 end as out_qty		
-						FROM	EZ_Order as o,			
+						FROM	"EZ_Order" as o,			
 								jsonb_to_recordset(o.order_products) as p(		
 									name character varying(255),	
 									product_id character varying(255),	

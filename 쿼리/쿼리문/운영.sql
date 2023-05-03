@@ -11,6 +11,21 @@
 -- id가 아니라 키워드로 매핑해야 해서.
 
 
+SELECT order_date, store, SUM(prd_amount_mod)
+FROM "order_batch"
+GROUP BY order_date, store
+Order BY order_date desc
+
+
+SELECT *
+FROM "naver_order_product"
+
+
+SELECT order_date, inflow_path, COUNT(DISTINCT order_id)
+FROM "order_batch"
+WHERE store = '스마트스토어_풀필먼트'
+GROUP BY order_date, inflow_path
+Order BY order_date desc
 
 
 
@@ -93,91 +108,43 @@ prd_amount도 중복으로 찍힌다.
 
 
 
+SELECT yymm, channel, store, brand, nick, owned_keyword,ad_type,campaign_type,adgroup, SUM(cost)AS cost, SUM(imp_cnt)AS 노출수, SUM(click_cnt) AS 클릭수, SUM(order_cnt) AS 전환수, SUM(order_price) AS 전환매출
+FROM "ad_batch"
+WHERE brand NOT IN ('기타','자사') AND channel='구글'
+GROUP BY yymm, channel, store, brand, nick, owned_keyword,ad_type,campaign_type,adgroup
+ORDER BY yymm DESC
+
+select *,
+	CASE WHEN (Channel = '메타' OR Channel = '구글') AND yymmdd <= '2023-02-09' THEN cost * 1.1
+ELSE cost
+END AS cost_markup
+FROM "ad_batch"
+
+SELECT * FROM "ad_batch" WHERE channel = '구글'
 
 
-SELECT max_rank, COUNT(*)
-FROM	(
-			
-			SELECT KEY, MAX(rank) AS max_rank
-			FROM 	(
-						SELECT *, rank() over(partition BY KEY Order BY seq) AS rank
-						FROM "customer_zip4"
-					) AS t
-			GROUP BY key
-			Order BY max_rank desc, KEY
+SELECT yymm, channel, SUM(cost)AS cost
+FROM "ad_batch"
+WHERE brand = '판토모나'
+GROUP BY yymm, channel
+ORDER BY yymm DESC
 
-		) AS t2
-GROUP BY max_rank
-
-
-
-
-
-SELECT * FROM "cost_marketing"
-
-SELECT * FROM "cost_product"
-
-
-
-SELECT DISTINCT key
-FROM "order_batch" 
-WHERE all_cust_type = '신규' AND order_date >= '2022-10-01' 
-
-
-
-
-
-WITH raw AS (
-	SELECT order_name || cust_id AS key, * 
-	FROM "EZ_Order" AS o,																		
-			jsonb_to_recordset(o.order_products) as p(																	
-				name character varying(255),																
-				product_id character varying(255),																
-				qty integer, 
-				prd_amount integer															
-			)
-	LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
-	LEFT JOIN "product" as pp on (b.product_no = pp.no)				
-	WHERE order_date >= '2022-10-01' AND order_name || cust_id <> '' AND cust_id <> ''
-	AND order_name || cust_id IN (
-		
-		SELECT DISTINCT key
-		FROM "order_batch" 
-		WHERE all_cust_type = '신규' AND order_date >= '2022-10-01' 
-	)
-)
-
-
-SELECT  	*, 
-		 	CASE 
-			 	WHEN product_id IN ('00206', '00207', '00208', '00214') THEN 1
-		 		ELSE 0
-		 	END AS pamphlet 
-FROM "raw"
-
-
-SELECT * FROM "order_batch"
-WHERE store = '스마트스토어_풀필먼트' AND brand = '판토모나' AND order_date BETWEEN '2023-04-19' AND '2023-04-25'
-
-DENSE_RANK() over (partition BY KEY Order BY order_id) AS cnt,
-
-
-주문일 이후 4개월 이내에 써큐시안 브랜드 재구매를 했느냐 안했느냐를 알아야 함.
-
-
-
-SELECT DISTINCT option_id
-FROM "coupang_sales"
-WHERE account = 'A00197911'
+SELECT * 
+FROM "ad_batch"
+WHERE channel = '구글'
 
 
 SELECT *
-FROM "coupang_sales"
-LIMIT 1
+FROM "ad_google3"
 
-order_name LIKE '%권혁민%'
+SELECT DISTINCT adgroup_id
+FROM "ad_mapping3"
+WHERE channel_no = 2
 
-SELECT * FROM ""
+
+SELECT *
+FROM "ad_google3" AS g
+LEFT JOIN "ad_mapping3" AS m ON (g.adgroup_id = m.adgroup_id)
+WHERE g.campaign = '실적 최대화_파이토웨이 셋팅'
 
 
-SELECT * FROM "ad_ga_aw"

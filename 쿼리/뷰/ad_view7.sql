@@ -103,7 +103,7 @@ FROM (
            g.campaign, g.adgroup, '' AS creative, 
 			  
 			  CASE 
-			      WHEN g.adgroup LIKE '%' || p.brand || '%' THEN '자상호' 
+			      WHEN g.campaign_type = '검색' AND g.adgroup LIKE '%' || p.brand || '%' THEN '자상호' 
 			      ELSE '비자상호'
 			  END AS owned_keyword, 
 			  
@@ -111,8 +111,8 @@ FROM (
            g.adcost AS cost, g.impression AS imp_cnt, g.click AS click_cnt, g."order" AS "order_cnt", g.gross AS "order_price", 
            g.adgroup_id,
            ROW_NUMBER() OVER(PARTITION BY yymmdd, g.adgroup_id ORDER BY keyword) AS adgroup_id_cnt
-    FROM "ad_google3" AS g
-    LEFT JOIN "ad_mapping3" AS m ON (g.adgroup_id = m.adgroup_id)
+	 FROM "ad_google3" AS g
+    LEFT JOIN (SELECT * FROM "ad_mapping3" WHERE channel_no = 2) AS m ON (g.adgroup_id = m.adgroup_id)
     LEFT JOIN channel AS c ON (c.no = m.channel_no)
     LEFT JOIN store AS s ON (s.no = m.store_no)
     LEFT JOIN product AS p ON (p.no = m.product_no)
