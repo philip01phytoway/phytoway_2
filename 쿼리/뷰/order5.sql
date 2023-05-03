@@ -19,7 +19,16 @@ SELECT
 					END
 				ELSE ''
 			END AS brand_cust_type,
-			inflow_path, account
+			inflow_path, account,
+			
+			CASE 
+				WHEN order_id <> '' AND phytoway = 'y' THEN
+					TO_CHAR(CASE 
+									WHEN order_qty * product_qty * term * 1.2 > 365 THEN order_date::date + interval '1 day' * 365 
+									ELSE order_date::date + interval '1 day' * order_qty * product_qty * term * 1.2 
+								END, 'yyyy-mm-dd')
+				ELSE ''
+			END AS dead_date
 			
 FROM 	(
 

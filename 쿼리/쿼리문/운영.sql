@@ -148,3 +148,8 @@ LEFT JOIN "ad_mapping3" AS m ON (g.adgroup_id = m.adgroup_id)
 WHERE g.campaign = '실적 최대화_파이토웨이 셋팅'
 
 
+SELECT *
+FROM "order_batch"
+LIMIT 100000		
+
+	
