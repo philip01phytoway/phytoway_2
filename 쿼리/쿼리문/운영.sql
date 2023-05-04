@@ -152,4 +152,42 @@ SELECT *
 FROM "order_batch"
 LIMIT 100000		
 
+SELECT *
+FROM "ad_batch"
+WHERE channel = '네이버' AND yymmdd = '2023-04-01' AND keyword = '비오틴효능'
+
+
+SELECT *
+FROM "AD_Naver"
+WHERE reg_date = '2023-04-01' AND "F" = '비오틴효능'
+
+LIMIT 100
 	
+	
+SELECT p.nick AS nick, expiration_date, SUM(received_qty) AS received_qty
+FROM "product_received" AS r
+LEFT JOIN "product" AS p ON (r.product_no = p.no)
+GROUP BY p.nick, expiration_date
+
+
+
+SELECT yymm, yyww, order_date, brand, nick, SUM(out_qty) AS out_qty
+FROM "order_batch"
+GROUP BY yymm, yyww, order_date, brand, nick
+Order BY order_date DESC, brand DESC
+LIMIT 1000
+
+
+
+
+SELECT I.상품코드, I.유통기한, SUM(I.입고수량 - COALESCE(O.누적출고수량, 0)) AS 재고수량
+FROM 입고테이블 I
+LEFT JOIN (
+    SELECT T1.상품코드, T1.유통기한, T1.입고일, SUM(T2.출고수량) AS 누적출고수량
+    FROM 입고테이블 T1
+    LEFT JOIN 출고테이블 T2
+    ON T1.상품코드 = T2.상품코드 AND T1.유통기한 = T2.유통기한 AND T1.입고일 >= T2.출고일
+    GROUP BY T1.상품코드, T1.유통기한, T1.입고일
+) AS O
+ON I.상품코드 = O.상품코드 AND I.유통기한 = O.유통기한 AND I.입고일 = O.입고일
+GROUP BY I.상품코드, I.유통기한

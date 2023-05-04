@@ -18,7 +18,7 @@ SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-25'
 
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-02'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-03'
 
 SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
 
@@ -1458,3 +1458,6 @@ Order BY yymmdd desc, channel, store, Product, owned_keyword_type
 
 
 
+SELECT *
+FROM "Query_Log2"
+WHERE query_date = '45049'
