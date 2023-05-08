@@ -227,10 +227,194 @@ WHERE reorder = '재구매'
 
 
 
+-- 2023-05-08 삽지 재구매율 재분석
 
-----------------------------------
 
-기간 상관없이로 변경
+-- 실험군_1개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
 
-----------------------------------
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 60)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE all_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 1 
+								AND order_date BETWEEN '2022-04-02' AND '2022-06-07'	
+						)
+						AND brand = '써큐시안' --AND out_qty = 1
+					) AS t
+		) AS tt
 
+) AS ttt
+WHERE reorder = '재구매'
+
+
+
+
+
+-- 실험군_3개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 180)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE all_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 3
+								AND order_date BETWEEN '2022-04-02' AND '2022-06-07'	
+						)
+						AND brand = '써큐시안' --AND out_qty = 3
+					) AS t
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'
+
+
+
+
+-- 대조군1_1개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 60)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE all_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 1
+								AND order_date BETWEEN '2022-02-01' AND '2022-03-31'	
+						)
+						AND brand = '써큐시안' --AND out_qty = 1
+					) AS t
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'
+
+
+
+-- 대조군1_3개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 180)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE all_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 3
+								AND order_date BETWEEN '2022-02-01' AND '2022-03-31'	
+						)
+						AND brand = '써큐시안' --AND out_qty = 3
+					) AS t 
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'
+
+
+
+
+-- 대조군2_1개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 60)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE all_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 1
+								AND order_date BETWEEN '2022-07-01' AND '2022-08-31'		
+						)
+						AND brand = '써큐시안' --AND out_qty = 1
+					) AS t
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'
+
+
+
+
+-- 대조군2_3개입
+SELECT COUNT(DISTINCT KEY)
+FROM (
+
+SELECT 	CASE 
+				WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+			END AS reorder, *	
+FROM 	(
+			SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+						*
+			FROM 	(
+						SELECT 	
+									(order_date::DATE + 180)::text as later_date,
+									rank() over (partition BY KEY Order BY order_date_time) AS rank,
+									*			
+						FROM "order_batch"
+						WHERE KEY IN (
+								SELECT DISTINCT key
+								FROM "order_batch"
+								WHERE all_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 3
+								AND order_date BETWEEN '2022-07-01' AND '2022-08-31'	
+						)
+						AND brand = '써큐시안' --AND out_qty = 3
+					) AS t
+		) AS tt
+
+) AS ttt
+WHERE reorder = '재구매'

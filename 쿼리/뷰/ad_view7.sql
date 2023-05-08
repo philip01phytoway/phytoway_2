@@ -23,7 +23,7 @@ SELECT 	y.yymm, y.yyww, y.yymmdd, c.name AS channel, s.name AS store,
 			a."F" AS Keyword,
 			a."P" AS cost, a."L" AS imp_cnt, a."M" AS click_cnt, a."Q" AS order_cnt, a."U" AS order_price, 0 AS order_cnt_14, 0 AS order_price_14, '' AS option_id
 FROM 		"AD_Naver" AS a
-LEFT JOIN "ad_mapping3" as m ON (a."B" = m.campaign AND a."D" = m.adgroup) 
+LEFT JOIN (SELECT * FROM "ad_mapping3" WHERE channel_no = 1) as m ON (a."B" = m.campaign AND a."D" = m.adgroup) 
 LEFT JOIN "product" as p ON (m.product_no = p.no)
 LEFT JOIN "store" as s ON (m.store_no = s.no)
 LEFT JOIN "channel" AS c ON (m.channel_no = c.no)
@@ -47,7 +47,7 @@ SELECT 	y.yymm, y.yyww, y.yymmdd, '쿠팡' AS Channel, '쿠팡' AS store, p.bran
 			
 			c.adcost AS cost, c.impressions AS imp_cnt, c.clicks AS click_cnt, c.order_cnt, c.gross AS order_price, C."Z" AS order_cnt_14, c."AF" AS order_price_14, c.product2_id
 FROM "AD_Coupang" AS c
-LEFT JOIN "ad_mapping3" AS m ON (m.product2_id = c.product2_id)
+LEFT JOIN (SELECT * FROM "ad_mapping3" WHERE channel_no = 5) AS m ON (m.product2_id = c.product2_id)
 LEFT JOIN "product" AS p ON (m.product_no = p.no)
 LEFT JOIN "YMD2" AS y ON (y.yymmdd = c.reg_date)
 
@@ -78,7 +78,7 @@ SELECT y.yymm, y.yyww, y.yymmdd, '쿠팡' AS Channel, '쿠팡' AS store,
 	END AS owned_keyword, cb.impression_keyword AS keyword,
  	cb.adcost AS cost, cb.impressions AS imp_cnt, cb.clicks AS click_cnt, cb.order_cnt, cb.gross AS order_price, cb."AO" AS order_cnt_14, cb."AU" AS order_price_14, cb.product2_id
 FROM "AD_CoupangBrand" AS cb         
-LEFT JOIN "ad_mapping3" AS  m ON (m.product2_id::text = cb.product2_id::text)
+LEFT JOIN (SELECT * FROM "ad_mapping3" WHERE channel_no = 5) AS m ON (m.product2_id::text = cb.product2_id::text)
 LEFT JOIN "product" AS p ON (m.product_no = p.no)
 LEFT JOIN "YMD2" y ON (cb.reg_date::text = y.yymmdd::TEXT)
 
@@ -179,7 +179,7 @@ SELECT y.yymm, y.yyww, SUBSTRING(a."date", 1, 10) AS reg_date, 'ADN' AS Channel,
        a.adcost AS cost, a.impression AS imp_cnt, a.click AS click_cnt, a.order_cnt, a.gross AS order_price,
        0 AS order_cnt_14, 0 AS order_price_14, '' AS option_id
 FROM "ad_adn" AS a
-LEFT JOIN ad_mapping3 m ON (a.campaign = m.campaign)
+LEFT JOIN (SELECT * FROM ad_mapping3 WHERE channel_no = 6) m ON (a.campaign = m.campaign)
 LEFT JOIN product p ON (m.product_no = p.no)
 LEFT JOIN store s ON (m.store_no = s.no)
 LEFT JOIN channel c ON (m.channel_no = c.no)

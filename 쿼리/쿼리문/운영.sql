@@ -191,3 +191,121 @@ LEFT JOIN (
 ) AS O
 ON I.상품코드 = O.상품코드 AND I.유통기한 = O.유통기한 AND I.입고일 = O.입고일
 GROUP BY I.상품코드, I.유통기한
+
+
+
+
+SELECT * FROM "ad_mapping3"
+
+
+SELECT * 
+FROM "Query_Log2" AS q
+LEFT JOIN "Keyword2" k ON (q.keyword = k.keyword)
+WHERE k.keyword IS NULL 
+
+
+        
+          
+
+
+-- 이탈율, 평균구매금액, ltv                
+-- 주차별, 상품 전체, 스토어 전체
+-- 보고 싶은 관점에 따라 group by 변경       
+SELECT yyww, 
+		sum(reorder_cnt)::FLOAT / sum(dead_cnt)::FLOAT AS "reorder_rate", 
+		sum(chunk_cnt)::FLOAT / sum(dead_cnt)::FLOAT AS "chunk_rate", 
+		sum(order_price) / sum(order_cnt) AS "avg_order_price",
+		(sum(order_price)::FLOAT / sum(order_cnt)::FLOAT) / (sum(chunk_cnt)::FLOAT / sum(dead_cnt)::FLOAT) AS "ltv"
+FROM "cruise_ltv_view" 
+WHERE yyww = '2023-18'
+GROUP BY yyww
+
+
+
+
+
+
+
+SELECT * --DISTINCT key
+FROM 	(
+			SELECT *, 
+									(DATE_PART('year', order_date::date) - DATE_PART('year', first_date::DATE)) * 12 +
+									DATE_PART('month', order_date::date) - DATE_PART('month', first_date::date) AS cohort_index,
+									TO_CHAR(DATE_TRUNC('month', first_date::DATE), 'YYYY-MM-DD') AS cohort_group
+						FROM 	(
+									SELECT 	KEY, order_date, Product, qty,
+												first_value(order_date) over(partition BY KEY Order BY seq) AS first_date
+									FROM 	(
+												SELECT *,
+															CASE WHEN product_qty * order_qty = 1 THEN '1'
+															WHEN product_qty * order_qty = 3 THEN '3'
+															--WHEN product_qty * order_qty = 6 THEN '6'
+															ELSE '기타'
+															END AS qty
+												FROM 	customer_zip3			
+											) AS t1
+								) AS t2
+		) AS t3
+WHERE (cohort_group = '2022-04-01' OR cohort_group = '2022-05-01') AND Product = '써큐시안' 
+AND (cohort_index = 1 OR cohort_index = 2) AND qty = '1'
+
+
+
+
+SELECT COUNT(DISTINCT KEY)
+FROM 	(
+			SELECT 	CASE 
+							WHEN rank > 1 AND min_later_date > order_date THEN '재구매'
+						END AS reorder, *	
+			FROM 	(
+						SELECT 	MIN(later_date) over (partition BY KEY Order BY order_date_time) AS min_later_date, 
+									*
+						FROM 	(
+									SELECT 	
+												(order_date::DATE + 60)::text as later_date,
+												rank() over (partition BY KEY Order BY order_date_time) AS rank,
+												*			
+									FROM "order_batch"
+									WHERE KEY IN (
+											SELECT DISTINCT key
+											FROM "order_batch"
+											WHERE all_cust_type = '신규' AND brand = '써큐시안' AND out_qty = 1 
+											AND order_date BETWEEN '2022-04-02' AND '2022-06-07'	
+									)
+									AND brand = '써큐시안' AND out_qty = 1
+								) AS t
+					) AS tt
+		) AS ttt
+WHERE reorder = '재구매'
+
+
+
+
+
+
+
+
+
+-- (상품별, 수량별)
+SELECT cohort_group, cohort_index, nick, qty, COUNT(DISTINCT key)
+FROM 	(
+			SELECT *, 
+						(DATE_PART('year', order_date::date) - DATE_PART('year', first_date::DATE)) * 12 +
+						DATE_PART('month', order_date::date) - DATE_PART('month', first_date::date) AS cohort_index,
+						TO_CHAR(DATE_TRUNC('month', first_date::DATE), 'YYYY-MM-DD') AS cohort_group
+			FROM 	(
+						SELECT 	KEY, order_date, nick, qty,
+									first_value(order_date) over(partition BY KEY Order BY order_date_time) AS first_date
+						FROM 	(
+									SELECT *,
+												CASE WHEN product_qty * order_qty = 1 THEN '1'
+												WHEN product_qty * order_qty = 3 THEN '3'
+												--WHEN product_qty * order_qty = 6 THEN '6'
+												ELSE '기타'
+												END AS qty
+									FROM 	"order_batch"
+									WHERE order_name = '강종철'			
+								) AS t1
+					) AS t2
+		) AS t3
+GROUP BY cohort_group, cohort_index, nick, qty
