@@ -18,7 +18,7 @@ SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-25'
 
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-04'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-08'
 
 SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
 
@@ -1366,7 +1366,18 @@ SELECT * FROM "ad_mapping3" WHERE campaign = '브랜드형_써큐시안'
 'A. 검색_써큐시안_MO' 
 
 
-SELECT * FROM "order_batch" WHERE store IS NULL
+SELECT yymm, yyww, order_date, SUM(prd_amount_mod)
+FROM "order_batch" 
+GROUP BY yymm, yyww, order_date
+Order BY order_date DESC
+
+
+SELECT yymm, yyww, order_date, store, SUM(prd_amount_mod)
+FROM "order_batch" 
+GROUP BY yymm, yyww, order_date, store
+Order BY order_date DESC, SUM(prd_amount_mod) DESC 
+
+
 
 
 ---- 배치 테이블 스케줄링 쿼리문 ----

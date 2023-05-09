@@ -1,3 +1,30 @@
+SELECT *,
+			CASE 
+				WHEN order_id <> '' AND phytoway = 'y'
+					THEN lag(dead_date, +1) over (partition by key Order by order_date_time asc)
+				ELSE ''
+			END AS prev_dead_date,
+			
+			CASE 
+				WHEN order_id <> '' AND phytoway = 'y'
+					THEN lag(dead_date, -1) over (partition by key Order by order_date_time asc)
+				ELSE ''
+			END AS next_dead_date,
+			
+			CASE 
+				WHEN order_id <> '' AND phytoway = 'y'
+					THEN lag(order_date, +1) over (partition by key order BY order_date_time asc)
+				ELSE ''
+			END AS prev_order_date,
+			
+			CASE 
+				WHEN order_id <> '' AND phytoway = 'y'
+					THEN lag(order_date, -1) over (partition by key order BY order_date_time asc)
+				ELSE ''
+			END AS next_order_date
+
+FROM 	(
+
 SELECT 	
 			y.yymm, y.yyww, t.order_date, order_date_time,
 			key, order_id, order_status,  order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date,
@@ -28,7 +55,7 @@ SELECT
 									ELSE order_date::date + interval '1 day' * order_qty * product_qty * term * 1.2 
 								END, 'yyyy-mm-dd')
 				ELSE ''
-			END AS dead_date
+			END AS dead_date	
 			
 FROM 	(
 
@@ -564,6 +591,7 @@ WHERE o.shop_name NOT IN ('스토어팜(파이토웨이)', '쿠팡')
 ) AS t
 LEFT JOIN "YMD2" AS y ON (t.order_date = y.yymmdd)
 
+) AS t2
 
 
 

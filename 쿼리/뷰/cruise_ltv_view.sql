@@ -3,13 +3,30 @@
 
 
 with purchase_term AS (
-		SELECT *, prd_amount_mod AS price,
-					lag(dead_date, +1) over (partition by key Order by order_date_time asc) as prev_dead_date,
-					lag(dead_date, -1) over (partition by key Order by order_date_time asc) as next_dead_date,
-					lag(order_date, +1) over (partition by key order BY order_date_time asc) as prev_order_date,
-					lag(order_date, -1) over (partition by key order BY order_date_time asc) as next_order_date
+		SELECT 
+					*, 
+					prd_amount_mod AS price,
+					CASE 
+						WHEN order_id <> '' AND phytoway = 'y'
+							THEN lag(dead_date, +1) over (partition by key Order by order_date_time asc)
+						ELSE NULL
+					END AS prev_dead_date,
+					CASE 
+						WHEN order_id <> '' AND phytoway = 'y'
+							THEN lag(dead_date, -1) over (partition by key Order by order_date_time asc)
+						ELSE NULL
+					END AS next_dead_date,
+					CASE 
+						WHEN order_id <> '' AND phytoway = 'y'
+							THEN lag(order_date, +1) over (partition by key order BY order_date_time asc)
+						ELSE NULL
+					END AS prev_order_date,
+					CASE 
+						WHEN order_id <> '' AND phytoway = 'y'
+							THEN lag(order_date, -1) over (partition by key order BY order_date_time asc)
+						ELSE NULL
+					END AS next_order_date
 		FROM "order_batch"
-		WHERE order_id <> '' AND phytoway = 'y'
 )
 
 SELECT   yymm, yyww, yymmdd,
