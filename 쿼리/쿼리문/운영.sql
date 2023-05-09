@@ -204,5 +204,50 @@ LEFT JOIN "Keyword2" k ON (q.keyword = k.keyword)
 WHERE k.keyword IS NULL 
 
 
-        
-          
+
+
+SELECT job_date, "sending_warehouse", "receiving_warehouse", "job_mod", "type", nick, SUM(recv_qty) AS recv_qty
+FROM 	(         
+			SELECT 	
+						CASE 
+							WHEN job = '입고' AND "type" = '정상' THEN '제조사'
+							WHEN job = '배송' AND "type" = '정상' THEN '코린트'
+							WHEN job = '출고' AND "type" = '정상' THEN '코린트'
+							WHEN job = '반품입고' AND "type" = '정상' THEN ez_store_name
+							WHEN job = '반품입고' AND "type" = '불량' THEN ez_store_name
+						END AS "sending_warehouse", 
+						
+						CASE 
+							WHEN job = '입고' AND "type" = '정상' THEN '코린트' 
+							WHEN job = '배송' AND "type" = '정상' THEN ez_store_name
+							WHEN job = '출고' AND "type" = '정상' THEN '네이버풀필먼트'
+							WHEN job = '반품입고' AND "type" = '정상' THEN '코린트'
+							WHEN job = '반품입고' AND "type" = '불량' THEN '코린트'
+						END AS "receiving_warehouse", 
+						
+						CASE 
+							WHEN job = '입고' AND "type" = '정상' THEN '입고'
+							WHEN job = '배송' AND "type" = '정상' AND ez_store_name <> 'B2B_제트배송' THEN '출고'
+							WHEN job = '출고' AND "type" = '정상' THEN '재고이동'
+							WHEN job = '배송' AND "type" = '정상' AND ez_store_name = 'B2B_제트배송' THEN '재고이동'
+							WHEN job = '반품입고' AND "type" = '정상' THEN '반품'
+							WHEN job = '반품입고' AND "type" = '불량' THEN '반품'
+						END AS "job_mod", 
+						
+						"type", LEFT(job_date, 10) AS job_date, p.nick, s.qty * b.qty AS recv_qty, 
+						
+						CASE 
+							WHEN job = '입고' AND "type" = '정상' THEN LEFT((job_date::DATE + INTERVAL '1 year')::TEXT, 10)
+						END AS "exp_date"
+						
+			FROM "stock_ez" AS s
+			LEFT JOIN "bundle" AS b ON (s.ez_product_code = b.ez_code)
+			LEFT JOIN "product" AS p ON (b.product_no = p.no)
+		) AS t
+GROUP BY job_date, "sending_warehouse", "receiving_warehouse", "job_mod", "type", nick
+
+
+
+SELECT SUM(qty)
+FROM "stock_ez"
+WHERE job = '입고'
