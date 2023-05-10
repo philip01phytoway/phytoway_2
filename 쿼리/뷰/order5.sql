@@ -366,7 +366,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 				WHEN brand = '기타' THEN 'n'
 				ELSE 'y'
 			END AS phytoway,
-			p.brand, p.nick, o.option_qty AS "product_qty", "quantity" AS order_qty, "quantity" * o.option_qty -1 AS "out_qty", 
+			p.brand, p.nick, o.option_qty AS "product_qty", "quantity" AS order_qty, "quantity" * o.option_qty * -1 AS "out_qty", 
 			CASE 
          	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN -1 
          	ELSE 0 
@@ -452,7 +452,88 @@ FROM "coupang_order" AS o,
 LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
 LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
 WHERE o."orderId"::TEXT NOT IN (SELECT order_num FROM "Non_Order")
-AND "cancelCount" = 0	
+
+
+UNION ALL 
+
+
+
+-- 쿠팡 취소건 (반품건은 이지어드민으로 반영)
+
+SELECT 	t.key, t."orderId", '취소' AS order_status, left(r."completeConfirmDate", 10) AS cancel_date, REPLACE(r."completeConfirmDate", 'T', ' ') AS "order_date_time",
+			t."ordererName", t."ordererEmail", t."ordererTel", t."receiverName", t."receiverTel", t."receiverZip", t."receiverAddress", t."store", t."phytoway", t."brand", t."nick", t."product_qty", t."order_qty", 
+			t."out_qty" * -1 AS out_qty, t."order_cnt" * -1 AS order_cnt, t."realPrice" * -1 AS realPrice, t."expectedSettlementAmount" * -1 AS expectedSettlementAmount, 
+			t."term", t."confirmDate", t."inflow_path", t."account"
+FROM  (
+
+			SELECT 	
+						CASE 
+						    WHEN ("orderer" ->> 'name') IS NULL 
+						        THEN ("receiver" ->> 'name')
+						    ELSE ("orderer" ->> 'name')
+						END 
+						||
+						CASE 
+						    WHEN ("orderer" ->> 'email') IS NULL 
+						        THEN 
+						            CASE 
+						                WHEN ("orderer" ->> 'safeNumber') IS NULL 
+						                    THEN ("receiver" ->> 'postCode')
+						                ELSE REPLACE(("orderer" ->> 'safeNumber'), '-', '')
+						            END 
+						    ELSE ("orderer" ->> 'email')
+						END AS KEY,
+			
+						"orderId"::text, '주문' as order_status, 
+						
+						LEFT("paidAt", 10) AS order_date,
+						REPLACE("paidAt", 'T', ' ') AS "order_date_time",
+						
+						CASE 
+							WHEN 
+								("orderer" ->> 'name') IS NULL THEN ("receiver" ->> 'name')
+							ELSE ("orderer" ->> 'name')
+						END AS "ordererName",
+						("orderer" ->> 'email') AS "ordererEmail",
+						REPLACE(("orderer" ->> 'safeNumber'), '-', '') AS "ordererTel",
+					 	 
+						("receiver" ->> 'name') AS "receiverName",
+						REPLACE(("receiver" ->> 'safeNumber'), '-', '') AS "receiverTel", -- 이건 case when 처리 필요한지?
+						("receiver" ->> 'postCode') AS "receiverZip",
+						("receiver" ->> 'addr1') AS "receiverAddress",
+						
+						'쿠팡' AS store,
+						
+						CASE 
+							WHEN brand = '기타' THEN 'n'
+							ELSE 'y'
+						END AS phytoway,
+						pp.brand, pp.nick, op.qty AS "product_qty", p."shippingCount" AS "order_qty", op.qty * p."shippingCount" AS "out_qty",
+						CASE 
+			         	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN 1 
+			         	ELSE 0 
+			       	END AS order_cnt,
+						
+						p."orderPrice" - p."discountPrice" AS "realPrice", 0 AS "expectedSettlementAmount", 
+						
+						pp.term, "confirmDate", '' AS inflow_path, '' AS account
+						
+			FROM "coupang_order" AS o,																
+					json_to_recordset(o."orderItems") as p(																	
+						"vendorItemName" CHARACTER varying(255),																
+						"vendorItemId" CHARACTER varying(255),
+						"shippingCount" INTEGER,
+						"cancelCount" INTEGER,
+						"orderPrice" INTEGER,
+						"discountPrice" INTEGER,
+						"confirmDate" 	CHARACTER varying(255)															
+					)
+			LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
+			LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
+			WHERE o."orderId"::TEXT NOT IN (SELECT order_num FROM "Non_Order")
+		) AS t
+LEFT JOIN "coupang_return_cancel" AS r ON (t."orderId" = r."orderId"::text) 
+WHERE r."orderId" IS NOT NULL AND "receiptType" = 'CANCEL' AND "receiptStatus" = 'RETURNS_COMPLETED'
 
 
 UNION ALL 
