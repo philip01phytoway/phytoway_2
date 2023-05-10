@@ -18,7 +18,7 @@ SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-25'
 
 
 -- 네이버광고
-SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-08'
+SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-09'
 
 SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
 
@@ -712,7 +712,7 @@ Order BY yymmdd DESC, Channel, brand, nick, page_type, id DESC, Keyword, owned_k
 SELECT 	yymm, yyww, yymmdd, Channel, brand, nick, page_type, owned_keyword_type, --Keyword, id,
 			SUM(cost1) AS cost1, sum(cost2) AS cost2, sum(pv) AS pv, sum(cc) AS cc, sum(cc2) AS cc2, sum(inflow_cnt) AS inflow_cnt, sum(order_cnt) AS order_cnt, sum(order_price) AS order_price
 FROM "content_view3"
-WHERE (yymmdd between '2022-10-01' AND '2023-04-26') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
+WHERE (yymmdd between '2022-10-01' AND '2023-05-10') AND page_type IN ('블로그', '지식인', '카페', '유튜브') AND Channel IN ('네이버', '구글')
 GROUP BY yymm, yyww, yymmdd, Channel, brand, nick, page_type, owned_keyword_type--, Keyword, id
 Order BY yymm desc, yyww desc, yymmdd DESC, Channel, brand, nick, page_type, owned_keyword_type--, keyword
 

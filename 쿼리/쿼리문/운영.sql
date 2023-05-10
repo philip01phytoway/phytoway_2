@@ -251,3 +251,87 @@ GROUP BY job_date, "sending_warehouse", "receiving_warehouse", "job_mod", "type"
 SELECT SUM(qty)
 FROM "stock_ez"
 WHERE job = '입고'
+
+
+
+SELECT DISTINCT campaign, adgroup
+FROM "ad_batch"
+WHERE channel IS NULL AND campaign LIKE '%판토모나%'
+
+
+SELECT *
+FROM "ad_batch"
+WHERE campaign = 'S_판토모나'
+
+
+
+
+-- 판매현황
+SELECT 	yymm, yyww, order_date, nick, 
+			CASE 
+				WHEN store IN ('스마트스토어_풀필먼트', '쿠팡_제트배송') THEN store
+				ELSE '코린트'
+			END AS "warehouse", 
+			SUM(out_qty) AS out_qty, SUM(prd_amount_mod) AS selling_price, SUM(prd_amount_mod) / 2 AS "purchase_price", store_type
+FROM 	(
+			SELECT 	*, 
+						CASE 
+							WHEN order_id = '' THEN 'B2B'
+							WHEN order_id <> '' THEN 'B2C'
+						END AS store_type
+			FROM "order_batch" 
+		) AS t
+GROUP BY yymm, yyww, order_date, nick, store_type, store
+Order BY order_date desc
+
+
+-- 19주차 WBR 보고서
+
+-- B2B
+SELECT yymm, yyww, order_date, 'B2B' AS "store_type", SUM(prd_amount_mod) AS price
+FROM "order_batch"
+WHERE order_id = '' AND yyww >= '2023-10'
+GROUP BY yymm, yyww, order_date
+--Order BY order_date DESC
+
+UNION ALL
+
+-- 리셀러
+SELECT yymm, yyww, order_date, '리셀러' AS "store_type", SUM(prd_amount_mod) AS price
+FROM "order_batch"
+WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod > 500000 AND yyww >= '2023-10'
+GROUP BY yymm, yyww, order_date
+--Order BY order_date DESC
+
+UNION ALL
+
+-- 신규, 재구매
+SELECT yymm, yyww, order_date, all_cust_type, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod <= 500000 AND yyww >= '2023-10'
+GROUP BY yymm, yyww, order_date, all_cust_type
+--Order BY order_date DESC
+
+UNION ALL
+
+-- 유지, 복귀
+SELECT 	yymm, yyww, order_date, cust_type, SUM(prd_amount_mod) AS price
+FROM 	(
+			SELECT 	*,
+						CASE 
+							WHEN order_date BETWEEN prev_order_date AND prev_dead_date THEN '유지'
+							WHEN order_date > prev_dead_date THEN '복귀'
+						END AS cust_type
+			FROM "order_batch"
+			WHERE all_cust_type = '재구매'
+		) AS t
+WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod <= 500000 AND cust_type IS NOT NULL AND yyww >= '2023-10'
+GROUP BY yymm, yyww, order_date, cust_type
+--Order BY order_date DESC
+
+
+
+이상이01057543585
+
+
+SELECT * FROM "order_batch" WHERE KEY = '이상이01057543585'
