@@ -285,53 +285,189 @@ GROUP BY yymm, yyww, order_date, nick, store_type, store
 Order BY order_date desc
 
 
--- 19주차 WBR 보고서
+-- 재고현황
 
--- B2B
-SELECT yymm, yyww, order_date, 'B2B' AS "store_type", SUM(prd_amount_mod) AS price
-FROM "order_batch"
-WHERE order_id = '' AND yyww >= '2023-10'
-GROUP BY yymm, yyww, order_date
---Order BY order_date DESC
 
-UNION ALL
+-- 1. 입고 테이블 생성
 
--- 리셀러
-SELECT yymm, yyww, order_date, '리셀러' AS "store_type", SUM(prd_amount_mod) AS price
-FROM "order_batch"
-WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod > 500000 AND yyww >= '2023-10'
-GROUP BY yymm, yyww, order_date
---Order BY order_date DESC
+SELECT "no", brand, nick
+FROM "product"
 
-UNION ALL
+-- 2. 재고이동 테이블 생성
 
--- 신규, 재구매
-SELECT yymm, yyww, order_date, all_cust_type, SUM(prd_amount_mod) AS price
-FROM "order_batch"
-WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod <= 500000 AND yyww >= '2023-10'
-GROUP BY yymm, yyww, order_date, all_cust_type
---Order BY order_date DESC
 
-UNION ALL
-
--- 유지, 복귀
-SELECT 	yymm, yyww, order_date, cust_type, SUM(prd_amount_mod) AS price
-FROM 	(
-			SELECT 	*,
-						CASE 
-							WHEN order_date BETWEEN prev_order_date AND prev_dead_date THEN '유지'
-							WHEN order_date > prev_dead_date THEN '복귀'
-						END AS cust_type
-			FROM "order_batch"
-			WHERE all_cust_type = '재구매'
-		) AS t
-WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod <= 500000 AND cust_type IS NOT NULL AND yyww >= '2023-10'
-GROUP BY yymm, yyww, order_date, cust_type
---Order BY order_date DESC
+SELECT * 
+FROM "product"
+WHERE "name" LIKE '%밀크%'
 
 
 
-이상이01057543585
+
+SELECT 	"ordererName" || "ordererId" AS "key", 
+			"orderId", '주문' as order_status, 
+			
+			LEFT("paymentDate", 10) AS "order_date",
+			LEFT("paymentDate", 10) || ' ' || SUBSTRING("paymentDate", 12, 8) AS "order_date_time",
+			
+			"ordererName", "ordererId", "ordererTel", 	 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			
+			CASE 
+				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
+				ELSE '스마트스토어'
+			END AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			p.brand, p.nick, o.option_qty AS "product_qty", "quantity" AS order_qty, "quantity" * o.option_qty AS "out_qty", 
+			CASE 
+         	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN 1 
+         	ELSE 0 
+       	END AS order_cnt,
+			
+			"totalPaymentAmount", "expectedSettlementAmount",
+			
+			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account
 
 
-SELECT * FROM "order_batch" WHERE KEY = '이상이01057543585'
+
+SELECT DISTINCT "productName", "productOption", p."name", o.option_qty, "optionCode"
+FROM 		"naver_order_product" AS n
+LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+WHERE 	"productOrderStatus" IN ('PAYED', 'DELIVERING', 'DELIVERED', 'PURCHASE_DECIDED', 'EXCHANGED', 'CANCELED', 'RETURNED')	
+AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
+
+
+
+SELECT * FROM "ad_mapping3" WHERE channel_no = 1
+
+
+SELECT * FROM "AD_Coupang" WHERE account <> 'A00197911'
+
+
+LIMIT 1000
+
+
+SELECT * FROM "ad_batch" WHERE channel IS NULL 
+
+
+SELECT * FROM "product" WHERE "name" LIKE '%밀크%'
+
+
+
+SELECT DISTINCT "vendorItemName", pp.name, op.qty		
+FROM "coupang_order" AS o,																
+		json_to_recordset(o."orderItems") as p(																	
+			"vendorItemName" CHARACTER varying(255),																
+			"vendorItemId" CHARACTER varying(255),
+			"shippingCount" INTEGER,
+			"cancelCount" INTEGER,
+			"orderPrice" INTEGER,
+			"discountPrice" INTEGER,
+			"confirmDate" 	CHARACTER varying(255)															
+		)
+LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
+LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
+WHERE o."orderId"::TEXT NOT IN (SELECT order_num FROM "Non_Order")
+
+
+
+SELECT * FROM "product" WHERE onnuri_type = '판매분매입'
+
+
+
+
+
+
+
+SELECT *
+FROM "product" WHERE "name" LIKE '%밀크%'
+
+
+SELECT *
+FROM "bundle"
+WHERE product_no = 15 OR product_no = 18
+
+
+SELECT *
+FROM "naver_option"
+WHERE option_code = '14475571772'
+
+
+
+WHERE product_no = 15 OR product_no = 18
+
+
+SELECT *
+FROM "coupang_option"
+WHERE product_no = 15 OR product_no = 18
+
+
+
+
+SELECT DISTINCT product_name, "options", product_id, pp.no, pp.onnuri_name
+FROM	"EZ_Order" as o,																		
+		jsonb_to_recordset(o.order_products) as p(																	
+			name character varying(255),																
+			product_id character varying(255),																
+			qty integer													
+		)
+LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
+LEFT JOIN "product" as pp on (b.product_no = pp.no)	
+WHERE product_name LIKE '%치실%' OR "options" LIKE '%치실%'
+
+10 : 1박스
+44 : 3박스
+57 : 4박스
+45 : 5박스
+
+
+
+LIMIT 10000
+
+
+SELECT *
+FROM "bundle"
+WHERE product_no = 10
+
+
+SELECT DISTINCT "productName", "productOption", o.option_code, p.no, p.onnuri_name
+FROM 		"naver_order_product" AS n
+LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+WHERE "productName" LIKE  '%치실%' OR "productOption" LIKE '%치실%'
+
+
+
+4729642401 : 3박스
+15026632498 : 1박스
+15026632499 : 3박스
+16575460672 : 1박스
+16575460673 : 3박스
+4729642401 : 3박스
+
+
+
+SELECT *
+FROM "naver_option"
+WHERE option_code = '16575460673'
+
+
+
+SELECT DISTINCT "vendorItemName", op.option, pp.no, pp.onnuri_name
+FROM "coupang_order" AS o,																
+		json_to_recordset(o."orderItems") as p(																	
+			"vendorItemName" CHARACTER varying(255),																
+			"vendorItemId" CHARACTER varying(255)													
+		)
+LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
+LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
+WHERE "vendorItemName" LIKE '%치실%'
+
+
+
+
+LIMIT 10000

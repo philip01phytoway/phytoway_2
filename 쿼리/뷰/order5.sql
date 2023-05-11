@@ -55,7 +55,9 @@ SELECT
 									ELSE order_date::date + interval '1 day' * order_qty * product_qty * term * 1.2 
 								END, 'yyyy-mm-dd')
 				ELSE ''
-			END AS dead_date	
+			END AS dead_date,
+			
+			onnuri_code, onnuri_name, onnuri_type	
 			
 FROM 	(
 
@@ -78,7 +80,8 @@ SELECT
 				WHEN brand = '기타' THEN 'n'
 				ELSE 'y'
 			END AS phytoway,
-			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path, '' AS account
+			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path, '' AS account,
+			onnuri_code, onnuri_name, onnuri_type
 
 FROM 	(
 			SELECT	
@@ -127,7 +130,9 @@ FROM 	(
 								
 						order_status, 	
 						
-						o2.term, o2."options"
+						o2.term, o2."options",
+						
+						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type
 			
 			FROM (
 						SELECT *, p.qty AS order_qty, b.qty AS product_qty,
@@ -192,7 +197,8 @@ SELECT
 				WHEN brand = '기타' THEN 'n'
 				ELSE 'y'
 			END AS phytoway,
-			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path, '' AS account
+			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path, '' AS account,
+			onnuri_code, onnuri_name, onnuri_type
 
 FROM 	(
 			SELECT	
@@ -250,7 +256,9 @@ FROM 	(
 								
 						order_status, 	
 						
-						o2.term, o2."options"
+						o2.term, o2."options",
+						
+						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type
 			
 			FROM (
 						SELECT *, p.qty AS order_qty, b.qty AS product_qty,
@@ -320,7 +328,9 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			
 			"totalPaymentAmount", "expectedSettlementAmount",
 			
-			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account
+			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type
 			
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
@@ -374,7 +384,9 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			
 			"totalPaymentAmount" * -1 AS "totalPaymentAmount", "expectedSettlementAmount" * -1 AS "expectedSettlementAmount",
 			
-			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account
+			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type
 			
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
@@ -437,7 +449,9 @@ SELECT
 			
 			p."orderPrice" - p."discountPrice" AS "realPrice", 0 AS "expectedSettlementAmount", 
 			
-			pp.term, "confirmDate", '' AS inflow_path, '' AS account
+			pp.term, "confirmDate", '' AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type
 			
 FROM "coupang_order" AS o,																
 		json_to_recordset(o."orderItems") as p(																	
@@ -463,7 +477,7 @@ UNION ALL
 SELECT 	t.key, t."orderId", '취소' AS order_status, left(r."completeConfirmDate", 10) AS cancel_date, REPLACE(r."completeConfirmDate", 'T', ' ') AS "order_date_time",
 			t."ordererName", t."ordererEmail", t."ordererTel", t."receiverName", t."receiverTel", t."receiverZip", t."receiverAddress", t."store", t."phytoway", t."brand", t."nick", t."product_qty", t."order_qty", 
 			t."out_qty" * -1 AS out_qty, t."order_cnt" * -1 AS order_cnt, t."realPrice" * -1 AS realPrice, t."expectedSettlementAmount" * -1 AS expectedSettlementAmount, 
-			t."term", t."confirmDate", t."inflow_path", t."account"
+			t."term", t."confirmDate", t."inflow_path", t."account", t."onnuri_code", t."onnuri_name", t."onnuri_type"
 FROM  (
 
 			SELECT 	
@@ -516,7 +530,9 @@ FROM  (
 						
 						p."orderPrice" - p."discountPrice" AS "realPrice", 0 AS "expectedSettlementAmount", 
 						
-						pp.term, "confirmDate", '' AS inflow_path, '' AS account
+						pp.term, "confirmDate", '' AS inflow_path, '' AS account,
+						
+						onnuri_code, onnuri_name, onnuri_type
 						
 			FROM "coupang_order" AS o,																
 					json_to_recordset(o."orderItems") as p(																	
@@ -561,7 +577,10 @@ SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, order_date, order_date ||
 			END AS order_cnt, 
 			
 			gross AS price, gross AS price2, 
-			0 AS term, '' AS decide_date, '' AS inflow_path, '' AS account
+			0 AS term, '' AS decide_date, '' AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type
+			
 FROM "b2b_gross" AS b
 LEFT JOIN "store" AS s ON (b.store_no = s.no)
 LEFT JOIN "product" AS p ON (b.product_no = p.no)
@@ -585,7 +604,9 @@ SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, "substring"((o.order_date
 				ELSE 'y'
 			END AS phytoway,
 			o.brand, o.nick, 1 AS product_qty, 1 AS order_qty, o.out_qty, 1 AS order_cnt,
-			o.amount AS price, o.supply_price, 0 AS term, '' AS decide_date, '' AS inflow_path, '' AS account
+			o.amount AS price, o.supply_price, 0 AS term, '' AS decide_date, '' AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type
 			
 FROM 	(
 			SELECT *, o.qty AS out_qty
@@ -636,7 +657,10 @@ SELECT
 			net_sales_cnt AS order_cnt, 
 			
 			net_sales_price AS price, 0 AS price2, 
-			0 AS term, '' AS decide_date, '' AS inflow_path, s.account
+			0 AS term, '' AS decide_date, '' AS inflow_path, s.account,
+			
+			onnuri_code, onnuri_name, onnuri_type
+			
 FROM "coupang_sales" AS s
 LEFT JOIN "coupang_option" AS op ON (s.option_id = op."option")
 LEFT JOIN "product" AS p ON (op.product_no = p.no)
@@ -662,7 +686,9 @@ SELECT 	order_name || order_tel AS KEY, '' AS order_id, '주문' as order_status
 			ELSE -1
 			END AS order_cnt,
 			
-			order_price AS price, order_price AS price2, p.term, '' AS decide_date, '' AS inflow_path, '' AS account
+			order_price AS price, order_price AS price2, p.term, '' AS decide_date, '' AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type
 			
 FROM	"PA_Order2" as o 
 left join "Bundle" as b on (o.order_code = b.order_code)																					
