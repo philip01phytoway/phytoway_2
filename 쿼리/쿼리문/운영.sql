@@ -301,3 +301,122 @@ FROM "product"
 SELECT * 
 FROM "order_batch" 
 WHERE onnuri_type = '판매분매입'
+
+
+SELECT *
+FROM "stock_recv"
+
+SELECT *
+FROM "stock_trans"
+
+
+SELECT *
+FROM "warehouse"
+
+
+
+
+
+
+
+
+
+
+-- 재고현황 1차 버전
+
+SELECT 	reg_date, "warehouse", onnuri_code, onnuri_name, stock_type,
+			lag(stock_qty, 1) over(partition BY "warehouse", onnuri_name, stock_type Order BY reg_date ASC) AS base_qty,
+			flow_qty, stock_qty, avg_sales_qty, 
+			
+			CASE 
+				WHEN avg_sales_qty <> 0 OR avg_sales_qty IS NULL THEN (stock_qty / avg_sales_qty * -1)::integer
+				ELSE NULL
+			END AS shortage_period
+
+FROM 	(
+
+
+SELECT 	*,
+			SUM(flow_qty) over(partition BY "warehouse", onnuri_name Order BY reg_date ASC) AS stock_qty,
+			AVG(CASE WHEN stock_type = '판매' THEN flow_qty ELSE NULL END) OVER (PARTITION BY "warehouse", onnuri_name, stock_type ORDER BY reg_date ROWS BETWEEN 29 PRECEDING AND CURRENT ROW)::integer AS avg_sales_qty
+
+
+FROM 	(
+
+
+SELECT reg_date, "warehouse", onnuri_code, onnuri_name, "stock_type", SUM(recv_qty) AS flow_qty			 
+FROM 	(
+
+
+-- 1. 입고
+SELECT s.reg_date, p.onnuri_code, p.onnuri_name, w.name AS "warehouse", s.recv_qty, '입고' AS "stock_type"
+FROM "stock_recv" AS s
+LEFT JOIN "warehouse" AS w ON (s.warehouse_no = w."no")
+LEFT JOIN "product" AS p ON (s.product_no = p.no)
+WHERE p.onnuri_type = '판매분매입'
+
+UNION ALL 
+
+
+-- 2. 재고이동
+-- 2-1. 코린트 재고이동(출고)
+SELECT s.reg_date, p.onnuri_code, p.onnuri_name, w.name AS "warehouse", s.trans_qty * -1 AS trans_qty, '재고이동' AS "stock_type"
+FROM "stock_trans" AS s
+LEFT JOIN "warehouse" AS w ON (s.from_warehouse_no = w."no")
+LEFT JOIN "product" AS p ON (s.product_no = p.no)
+WHERE s.from_warehouse_no = 1 AND p.onnuri_type = '판매분매입'
+
+
+UNION ALL 
+
+
+-- 2-2. 스마트스토어_풀필먼트 재고이동(입고)
+SELECT s.reg_date, p.onnuri_code, p.onnuri_name, w.name AS "warehouse", s.trans_qty, '재고이동' AS "stock_type"
+FROM "stock_trans" AS s
+LEFT JOIN "warehouse" AS w ON (s.to_warehouse_no = w."no")
+LEFT JOIN "product" AS p ON (s.product_no = p.no)
+WHERE s.to_warehouse_no = 2 AND p.onnuri_type = '판매분매입'
+
+
+UNION ALL 
+
+
+-- 2-3. 쿠팡_제트배송 재고이동(입고)
+SELECT s.reg_date, p.onnuri_code, p.onnuri_name, w.name AS "warehouse", s.trans_qty, '재고이동' AS "stock_type"
+FROM "stock_trans" AS s
+LEFT JOIN "warehouse" AS w ON (s.to_warehouse_no = w."no")
+LEFT JOIN "product" AS p ON (s.product_no = p.no)
+WHERE s.to_warehouse_no = 3 AND p.onnuri_type = '판매분매입'
+
+
+UNION ALL 
+
+
+-- 3. 출고
+SELECT 	order_date, onnuri_code, onnuri_name,
+			CASE 
+				WHEN store IN ('스마트스토어_풀필먼트', '쿠팡_제트배송') THEN store
+				ELSE '코린트'
+			END AS "warehouse", 
+			SUM(out_qty) * -1 AS out_qty, '판매' AS "stock_type"
+FROM 	(
+			SELECT 	*, 
+						CASE 
+							WHEN order_id = '' THEN 'B2B'
+							WHEN order_id <> '' THEN 'B2C'
+						END AS store_type
+			FROM "order_batch" 
+			WHERE onnuri_type = '판매분매입' AND order_date >= '2023-05-01'
+		) AS t
+GROUP BY order_date, onnuri_code, onnuri_name, store
+
+) AS t1
+GROUP BY reg_date, "warehouse", onnuri_code, onnuri_name, "stock_type"
+
+
+) AS t2
+
+
+) t3
+--WHERE "warehouse" = '코린트' AND onnuri_name = '판토모나 비오틴 하이퍼포머'
+Order BY reg_date DESC 
