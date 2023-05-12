@@ -282,6 +282,7 @@ FROM 	(
 			FROM "order_batch" 
 			WHERE onnuri_type = '판매분매입'
 		) AS t
+WHERE yymm >= '2023-01'
 GROUP BY yymm, yyww, order_date, onnuri_code, onnuri_name, store_type, store
 Order BY order_date desc
 
@@ -420,3 +421,14 @@ GROUP BY reg_date, "warehouse", onnuri_code, onnuri_name, "stock_type"
 ) t3
 --WHERE "warehouse" = '코린트' AND onnuri_name = '판토모나 비오틴 하이퍼포머'
 Order BY reg_date DESC 
+
+
+
+
+SELECT *
+FROM "stock_recv"
+
+
+SELECT *
+FROM "stock_trans"
+
