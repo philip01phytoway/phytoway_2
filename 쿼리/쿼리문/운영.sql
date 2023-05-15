@@ -394,7 +394,7 @@ UNION ALL
 
 
 -- 3. 출고
-SELECT 	order_date, onnuri_code, onnuri_name,
+SELECT 	trans_date, onnuri_code, onnuri_name,
 			CASE 
 				WHEN store IN ('스마트스토어_풀필먼트', '쿠팡_제트배송') THEN store
 				ELSE '코린트'
@@ -407,9 +407,10 @@ FROM 	(
 							WHEN order_id <> '' THEN 'B2C'
 						END AS store_type
 			FROM "order_batch" 
-			WHERE onnuri_type = '판매분매입' AND order_date >= '2023-05-01'
+			WHERE onnuri_type = '판매분매입' AND order_date >= '2023-05-01' 
+			AND trans_date <> '' AND trans_date IS NOT NULL AND order_status <> '취소'
 		) AS t
-GROUP BY order_date, onnuri_code, onnuri_name, store
+GROUP BY trans_date, onnuri_code, onnuri_name, store
 
 ) AS t1
 GROUP BY reg_date, "warehouse", onnuri_code, onnuri_name, "stock_type"
@@ -425,10 +426,27 @@ Order BY reg_date DESC
 
 
 
-SELECT *
-FROM "stock_recv"
 
 
 SELECT *
-FROM "stock_trans"
+FROM 	"order_batch"
+WHERE trans_date = '2023-05-04' AND store = '쿠팡' AND nick = '판토모나하이퍼포머'
 
+
+SELECT *
+FROM 	"order_batch"
+WHERE trans_date = '2023-05-05' AND store = '쿠팡' AND nick = '판토모나하이퍼포머'
+
+
+
+
+SELECT SUM(out_qty)
+FROM 	"order_batch"
+WHERE trans_date = '2023-05-08' AND store = '쿠팡' AND nick = '판토모나하이퍼포머' AND order_status <> '취소'
+
+
+
+
+SELECT SUM(out_qty)
+FROM 	"order_batch"
+WHERE trans_date = '2023-05-09' AND store = '쿠팡' AND nick = '판토모나하이퍼포머' AND order_status <> '취소'

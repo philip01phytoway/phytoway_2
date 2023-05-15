@@ -57,7 +57,7 @@ SELECT
 				ELSE ''
 			END AS dead_date,
 			
-			onnuri_code, onnuri_name, onnuri_type	
+			onnuri_code, onnuri_name, onnuri_type, trans_date
 			
 FROM 	(
 
@@ -81,7 +81,7 @@ SELECT
 				ELSE 'y'
 			END AS phytoway,
 			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path, '' AS account,
-			onnuri_code, onnuri_name, onnuri_type
+			onnuri_code, onnuri_name, onnuri_type, left(trans_date_pos, 10) AS trans_date
 
 FROM 	(
 			SELECT	
@@ -132,7 +132,7 @@ FROM 	(
 						
 						o2.term, o2."options",
 						
-						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type
+						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type, trans_date_pos
 			
 			FROM (
 						SELECT *, p.qty AS order_qty, b.qty AS product_qty,
@@ -198,7 +198,7 @@ SELECT
 				ELSE 'y'
 			END AS phytoway,
 			brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price,  term, '' AS decide_date, '' AS inflow_path, '' AS account,
-			onnuri_code, onnuri_name, onnuri_type
+			onnuri_code, onnuri_name, onnuri_type, cs_date AS trans_date
 
 FROM 	(
 			SELECT	
@@ -258,7 +258,7 @@ FROM 	(
 						
 						o2.term, o2."options",
 						
-						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type
+						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type, trans_date_pos
 			
 			FROM (
 						SELECT *, p.qty AS order_qty, b.qty AS product_qty,
@@ -330,7 +330,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			
 			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account,
 			
-			onnuri_code, onnuri_name, onnuri_type
+			onnuri_code, onnuri_name, onnuri_type, LEFT("sendDate", 10) AS trans_date
 			
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
@@ -386,7 +386,13 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			
 			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account,
 			
-			onnuri_code, onnuri_name, onnuri_type
+			onnuri_code, onnuri_name, onnuri_type, 
+			
+			CASE 
+				WHEN "productOrderStatus" = 'EXCHANGED' THEN LEFT("claimRequestDate", 10)
+				WHEN "productOrderStatus" = 'CANCELED' THEN LEFT("cancelCompletedDate", 10)
+				WHEN "productOrderStatus" = 'RETURNED' THEN LEFT("returnCompletedDate", 10)
+			END AS trans_date
 			
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
@@ -451,7 +457,7 @@ SELECT
 			
 			pp.term, "confirmDate", '' AS inflow_path, '' AS account,
 			
-			onnuri_code, onnuri_name, onnuri_type
+			onnuri_code, onnuri_name, onnuri_type, LEFT("inTrasitSTRINGTime", 10) AS trans_date
 			
 FROM "coupang_order" AS o,																
 		json_to_recordset(o."orderItems") as p(																	
@@ -477,7 +483,7 @@ UNION ALL
 SELECT 	t.key, t."orderId", '취소' AS order_status, left(r."completeConfirmDate", 10) AS cancel_date, REPLACE(r."completeConfirmDate", 'T', ' ') AS "order_date_time",
 			t."ordererName", t."ordererEmail", t."ordererTel", t."receiverName", t."receiverTel", t."receiverZip", t."receiverAddress", t."store", t."phytoway", t."brand", t."nick", t."product_qty", t."order_qty", 
 			t."out_qty" * -1 AS out_qty, t."order_cnt" * -1 AS order_cnt, t."realPrice" * -1 AS realPrice, t."expectedSettlementAmount" * -1 AS expectedSettlementAmount, 
-			t."term", t."confirmDate", t."inflow_path", t."account", t."onnuri_code", t."onnuri_name", t."onnuri_type"
+			t."term", t."confirmDate", t."inflow_path", t."account", t."onnuri_code", t."onnuri_name", t."onnuri_type", left(r."completeConfirmDate", 10) AS "trans_date"
 FROM  (
 
 			SELECT 	
@@ -532,7 +538,7 @@ FROM  (
 						
 						pp.term, "confirmDate", '' AS inflow_path, '' AS account,
 						
-						onnuri_code, onnuri_name, onnuri_type
+						onnuri_code, onnuri_name, onnuri_type, "inTrasitSTRINGTime" AS trans_date
 						
 			FROM "coupang_order" AS o,																
 					json_to_recordset(o."orderItems") as p(																	
@@ -579,7 +585,7 @@ SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, order_date, order_date ||
 			gross AS price, gross AS price2, 
 			0 AS term, '' AS decide_date, '' AS inflow_path, '' AS account,
 			
-			onnuri_code, onnuri_name, onnuri_type
+			onnuri_code, onnuri_name, onnuri_type, order_date AS trans_date
 			
 FROM "b2b_gross" AS b
 LEFT JOIN "store" AS s ON (b.store_no = s.no)
@@ -606,7 +612,7 @@ SELECT 	'' AS KEY, '' AS order_id, '' AS order_status, "substring"((o.order_date
 			o.brand, o.nick, 1 AS product_qty, 1 AS order_qty, o.out_qty, 1 AS order_cnt,
 			o.amount AS price, o.supply_price, 0 AS term, '' AS decide_date, '' AS inflow_path, '' AS account,
 			
-			onnuri_code, onnuri_name, onnuri_type
+			onnuri_code, onnuri_name, onnuri_type, left(trans_date_pos, 10) AS trans_date
 			
 FROM 	(
 			SELECT *, o.qty AS out_qty
@@ -659,7 +665,7 @@ SELECT
 			net_sales_price AS price, 0 AS price2, 
 			0 AS term, '' AS decide_date, '' AS inflow_path, s.account,
 			
-			onnuri_code, onnuri_name, onnuri_type
+			onnuri_code, onnuri_name, onnuri_type, s.reg_date AS trans_date
 			
 FROM "coupang_sales" AS s
 LEFT JOIN "coupang_option" AS op ON (s.option_id = op."option")
@@ -688,7 +694,7 @@ SELECT 	order_name || order_tel AS KEY, '' AS order_id, '주문' as order_status
 			
 			order_price AS price, order_price AS price2, p.term, '' AS decide_date, '' AS inflow_path, '' AS account,
 			
-			onnuri_code, onnuri_name, onnuri_type
+			onnuri_code, onnuri_name, onnuri_type, '' AS trans_date
 			
 FROM	"PA_Order2" as o 
 left join "Bundle" as b on (o.order_code = b.order_code)																					
