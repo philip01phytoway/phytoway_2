@@ -23,8 +23,106 @@ WHERE option_id IN ('85917629844', '70553656357')
 
 
 SELECT *
+<<<<<<< HEAD
 FROM "content_batch"
 WHERE id = '3491'
+=======
+FROM "warehouse"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT *
+FROM 	"order_batch"
+WHERE trans_date = '2023-05-04' AND store = '쿠팡' AND nick = '판토모나하이퍼포머'
+
+
+SELECT *
+FROM 	"order_batch"
+WHERE trans_date = '2023-05-05' AND store = '쿠팡' AND nick = '판토모나하이퍼포머'
+
+
+
+
+SELECT store, out_qty --SUM(out_qty)
+FROM 	"order_batch"
+WHERE trans_date = '2023-05-08' AND nick = '판토모나하이퍼포머' AND order_status <> '취소'
+AND store NOT IN ('스마트스토어_풀필먼트', '쿠팡_제트배송')
+
+
+SELECT * FROM "store"
+
+AND store = '쿠팡'
+
+
+SELECT * 
+FROM "EZ_Order"
+WHERE shop_name = '추가발송'
+
+
+
+
+SELECT *
+FROM	"EZ_Order" as o
+--WHERE o."options" LIKE '%온유%'
+
+LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
+WHERE s.ez_store_code IS NULL
+
+
+
+SELECT SUM(out_qty)
+FROM 	"order_batch"
+WHERE trans_date = '2023-05-09' AND store = '쿠팡' AND nick = '판토모나하이퍼포머' AND order_status <> '취소'
+
+
+
+출고에는
+재고이동, 증정, 판매가 있음.
+
+
+
+
+
+SELECT *
+FROM (
+			SELECT *
+			FROM "EZ_Order" AS o,																		
+								jsonb_to_recordset(o.order_products) AS p(																	
+									name CHARACTER VARYING(255),																
+									product_id CHARACTER VARYING(255),																
+									qty INTEGER, 
+									prd_amount INTEGER,	
+									prd_supply_price INTEGER,															
+									order_cs INTEGER,																
+									cancel_date CHARACTER VARYING(255),																
+									change_date CHARACTER VARYING(255)																
+								)
+						LEFT JOIN "bundle" AS b ON (p.product_id = b.ez_code)																	
+						LEFT JOIN "product" AS pp ON (b.product_no = pp.no)	
+			) AS t
+WHERE shop_name = '추가발송'
+AND recv_name NOT LIKE '%전현빈%'
+
+
+
+
+
+
+
+>>>>>>> c0fdf1b5179f64b41ca4aae5fc8c77e3bca6f86a
 
 
 
