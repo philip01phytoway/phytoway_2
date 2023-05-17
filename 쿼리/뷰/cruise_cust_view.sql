@@ -5,7 +5,7 @@ SELECT MAX(order_date) AS "누적기준일", '써큐시안' as brand, count(dist
 FROM "order_batch" 
 WHERE all_cust_type = '신규' AND nick = '써큐시안'
 
-UNION ALL 
+UNION ALL 	
 
 SELECT  order_date AS "누적기준일", brand, cnt
 FROM 	(
@@ -71,3 +71,7 @@ FROM 	(
 			)
 			AND nick = '판토모나레이디' 
 		) AS t
+
+
+
+

@@ -628,7 +628,7 @@ LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 WHERE 
 		(
 				(
-					o.shop_id IN (10087, 10286, 10387) 
+					o.shop_id IN (10087, 10286, 10387, 10096) 
 				)
 			OR
 				(

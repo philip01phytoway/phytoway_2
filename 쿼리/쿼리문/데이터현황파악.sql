@@ -1,16 +1,85 @@
 -- 데이터 현황파악
 
+--  1. 일별 매출 합계
+SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+GROUP BY yymm, yyww, order_date
+Order BY order_date DESC
+LIMIT 1000
+
+
+-- 2. 주별 매출 합계
+SELECT yyww, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+GROUP BY yyww
+Order BY yyww DESC
+LIMIT 1000
+
+
+-- 주 시작일 종료일 참고
+SELECT yyww, MIN(yymmdd) AS start_date, MAX(yymmdd) AS end_date
+FROM "YMD2"
+GROUP BY yyww
+Order BY yyww desc
+
+
+-- 3. 월별 매출 합계
+SELECT yymm, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+GROUP BY yymm
+Order BY yymm DESC
+LIMIT 1000
+
+
+-- 4. 일별 주문건수, 고객수, 출고수량, 주문매출 합계
+SELECT yymm, yyww, order_date, SUM(order_cnt) AS order_cnt, COUNT(DISTINCT KEY) AS key_cnt, SUM(out_qty) AS out_qty, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+GROUP BY yymm, yyww, order_date
+Order BY order_date DESC
+LIMIT 1000
+
+
+-- 5. 일별 신규주문건수, 재구매주문건수, 신규고객수, 재구매고객수, 신규매출, 재구매매출 합계
+SELECT 	yyww,
+
+			SUM(CASE 
+					WHEN all_cust_type = '신규' THEN order_cnt
+					ELSE 0
+				END) AS new_order_cnt,
+			
+			SUM(CASE 
+					WHEN all_cust_type = '재구매' THEN order_cnt
+					ELSE 0
+				END) AS re_order_cnt,
+			
+			COUNT(DISTINCT 
+				CASE 
+					WHEN all_cust_type = '신규' THEN key
+					
+				END) AS new_cust_cnt
+			
+				
+FROM "order_batch"
+GROUP BY yyww
+ORDER BY yyww DESC
+
+
+
+
+SELECT SUM(prd_amount_mod)
+FROM "order_batch" 
+WHERE order_date BETWEEN '2023-05-10' AND '2023-05-16'
+
+
+LIMIT 1000
+
 
 -- 쿼리문 추출과 함께 기초적인 기술통계를 하면 좋겠다.
 -- 단지 표만 봐서는 뭐가 어떤지를 모르니까.
 
 -- 매출 현황
 -- 일자별
-SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
-FROM "order_batch"
-GROUP BY yymm, yyww, order_date
-Order BY order_date DESC
-LIMIT 1000
+
 
 -- 전주 동요일 대비
 
@@ -74,7 +143,7 @@ LIMIT 1000
 
 
 -- 평균과 변동.
--- 30일 이동평균 매출도 보고,
+-- 30일 이동평균 매출도 보고, 월화수목 평균 vs 주말 평균, 그리고 표준편차 등.
 -- 변동도 구해보고,
 
 -- 매출의 분포도 봐야겠다. 정규분포를 띄고 있을까?
@@ -117,7 +186,7 @@ LIMIT 1000
 
 
 
-
+-- 주문 매핑은 상품과 스토어이다.
 
 
 -- EZ_Order에 스토어 매핑 누락 확인
@@ -125,5 +194,47 @@ SELECT DISTINCT shop_name
 FROM	"EZ_Order" as o
 LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 WHERE s.ez_store_code IS NULL
+-- B2B_제트배송은 판매가 아니라 재고이동이다.
 
 
+-- EZ_Order에 번들 매핑 누락 확인
+SELECT DISTINCT p.name
+FROM	"EZ_Order" as o,																		
+		jsonb_to_recordset(o.order_products) as p(																	
+			name character varying(255),																
+			product_id character varying(255)
+		)
+LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
+LEFT JOIN "product" as pp on (b.product_no = pp.no)
+WHERE b.ez_code IS NULL 
+-- p.name IS null
+
+
+
+
+-- EZ_Order에 상품 매핑 누락 확인
+SELECT DISTINCT p.name
+FROM	"EZ_Order" as o,																		
+		jsonb_to_recordset(o.order_products) as p(																	
+			name character varying(255),																
+			product_id character varying(255)
+		)
+LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
+LEFT JOIN "product" as pp on (b.product_no = pp.no)
+WHERE pp.no IS NULL 
+
+
+
+
+
+-- 광고 매핑 중복 확인
+
+
+
+
+-- 쿠팡 매핑 중복 확인
+SELECT product2_id
+FROM "ad_mapping3"
+WHERE channel_no = 5
+GROUP BY product2_id
+HAVING COUNT(*) > 1
