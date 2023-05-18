@@ -34,14 +34,49 @@ FROM "warehouse"
 
 
 
+-- B2B
+SELECT yymm, yyww, order_date, store, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+WHERE order_id = '' AND yyww = '2023-20'
+GROUP BY yymm, yyww, order_date, store
+--Order BY order_date DESC
+
+
+
+
+-- B2B
+SELECT SUM(prd_amount_mod) AS price
+FROM "order_batch"
+WHERE order_id = '' AND yyww = '2023-20' AND store <> '쿠팡_로켓배송'
+
+--Order BY order_date DESC
+
+
+
+SELECT *
+FROM "order_batch"
+WHERE store = '스마트스토어_풀필먼트' AND order_date_time BETWEEN '2023-05-17 10:00:00'  AND '2023-05-18 10:00:00'
+AND nick IN ('써큐시안', '판토모나맨', '판토모나레이디') AND 
 
 
 
 
 
 
+SELECT *
+FROM "order_batch"
+WHERE store = '온유약국'
 
 
+
+'마켓컬리'
+
+
+SELECT *
+FROM "EZ_Order"
+WHERE shop_id = 10286
+
+[{"qty": "150", "name": "판토모나 비오틴 하이퍼포머, 1개", "brand": "", "barcode": "PRMD00135", "is_gift": "0", "link_id": "", "options": "", "prd_seq": "528070", "order_cs": "0", "prd_amount": "4169550", "product_id": "00135", "shop_price": "0", "cancel_date": "", "change_date": "", "enable_sale": "1", "extra_money": "0", "new_link_id": "", "supply_code": "20001", "supply_name": "자사", "supply_options": "", "prd_supply_price": "4169550"}]
 
 
 SELECT *
@@ -92,6 +127,65 @@ WHERE trans_date = '2023-05-09' AND store = '쿠팡' AND nick = '판토모나하
 출고에는
 재고이동, 증정, 판매가 있음.
 
+
+SELECT dead_date, COUNT(DISTINCT key) AS 재구매잠재고객수
+FROM "order_batch"
+WHERE dead_date >='2022-01'
+GROUP BY dead_date
+
+
+SELECT dead_date, count(distinct key) as 재구매고객수
+FROM "order_batch"
+where dead_date >='2022-01'
+group by dead_date
+
+
+
+
+-- 만료고객수
+-- 만료일자 기간 수정하여 사용
+SELECT left(dead_date, 7) AS dead_month, COUNT(DISTINCT KEY)
+FROM "order_batch"
+WHERE dead_date <> ''
+GROUP BY left(dead_date, 7)
+Order BY left(dead_date, 7) desc
+
+
+
+
+-- 재구매고객수
+-- 만료일자 기간 수정하여 사용
+SELECT  *-- SUM(order_cnt), count(distinct key)
+FROM "order_batch"
+WHERE dead_date BETWEEN '2023-03-08' AND '2023-03-14' AND (next_order_date BETWEEN order_date AND dead_date)
+Order BY KEY, order_cnt
+
+
+SELECT *
+FROM "order_batch"
+WHERE KEY = '강미나morn****'
+
+595
+
+460
+491
+
+274
+
+244
+256
+
+-- 재구매건수
+-- 만료일자 기간 수정하여 사용
+SELECT SUM(order_cnt) AS reorder_cnt
+FROM "order_batch"
+WHERE dead_date BETWEEN '2023-03-08' AND '2023-03-14' AND (next_order_date BETWEEN order_date AND dead_date)
+
+
+
+SELECT *
+FROM "order_batch"
+WHERE KEY = '강윤희blue****'
 
 
 

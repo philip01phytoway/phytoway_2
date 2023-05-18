@@ -2,7 +2,7 @@
 -- SCM 프로젝트
 
 
-<<<<<<< HEAD
+
 -- 판매현황
 SELECT 	yymm, yyww, order_date, onnuri_code, onnuri_name,
 			CASE 
@@ -24,8 +24,6 @@ GROUP BY yymm, yyww, order_date, onnuri_code, onnuri_name, store_type, store
 Order BY order_date desc
 
 
-=======
->>>>>>> c0fdf1b5179f64b41ca4aae5fc8c77e3bca6f86a
 
 -- 재고현황 1차 버전
 
