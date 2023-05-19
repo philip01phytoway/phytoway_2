@@ -165,14 +165,43 @@ SELECT *
 FROM "order_batch"
 WHERE KEY = '강미나morn****'
 
-595
 
-460
-491
+SELECT *
+FROM "order_batch"
+WHERE order_id = '2023043016797671'
 
-274
 
-244
+SELECT *
+FROM "EZ_Order"
+WHERE order_id = '2023043016797671'
+
+
+SELECT *
+FROM "order_batch"
+WHERE order_id = '2023021122201071'
+
+
+store LIKE '%스마트스토어%' AND decide_date <> ''
+
+SELECT * FROM "ad_mapping3"
+
+
+SELECT *
+FROM "ad_batch"
+WHERE channel IS NULL --= '네이버'
+ORDER BY yymmdd ASC
+LIMIT 1000
+
+
+SELECT * 
+FROM "AD_Naver" 
+Order BY "A"
+LIMIT 10000
+
+
+Order BY yymmdd LIMIT 10000
+
+
 256
 
 -- 재구매건수

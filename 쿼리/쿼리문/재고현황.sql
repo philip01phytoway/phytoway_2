@@ -124,6 +124,7 @@ SELECT
 			trans_date, onnuri_code, onnuri_name,
 			'코린트' AS "warehouse", 
 			SUM(out_qty) * -1 AS out_qty, '판매' AS "stock_type"
+SELECT *
 FROM 	(
 			SELECT	
 

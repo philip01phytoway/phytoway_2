@@ -26,6 +26,9 @@ SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-25'
 -- 네이버광고
 SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-14'
 
+SELECT * FROM "AD_Naver" WHERE reg_date = '2023-05-18'
+
+
 SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
 
 -- 재고
@@ -76,8 +79,30 @@ SELECT * FROM "ad_adn" Order BY "date" DESC
 
 SELECT distinct adgroup_id FROM "ad_mapping3" WHERE channel_no = 2
 
+
+
+SELECT *
+FROM "ad_mapping3" 
+WHERE channel_no = 1
+AND campaign IN 
+(
+SELECT campaign
+FROM "ad_mapping3" 
+WHERE channel_no = 1
+GROUP BY campaign, adgroup
+HAVING COUNT(*) > 1)
+AND adgroup IN (
+SELECT adgroup
+FROM "ad_mapping3" 
+WHERE channel_no = 1
+GROUP BY campaign, adgroup
+HAVING COUNT(*) > 1
+)
+Order BY campaign, adgroup
+
+
 -- 네이버 중복 매핑 확인
-SELECT campaign, adgroup
+SELECT campaign, adgroup, COUNT(*)
 FROM "ad_mapping3" 
 WHERE channel_no = 1
 GROUP BY campaign, adgroup
@@ -87,6 +112,18 @@ HAVING COUNT(*) > 1
 -- AD_Naver의 행 개수와 매핑 이후 행 개수를 비교해서 일치하는지 확인해야 할 듯
 
 SELECT * FROM "AD_Naver" WHERE "B" = 'B_파이토웨이' AND "D" = '파이토웨이_MO'
+
+
+SELECT * FROM "order_batch" 
+
+
+WHERE store = '쿠팡_로켓배송'
+
+
+SELECT * 
+FROM "EZ_Order"
+LIMIT 10000
+
 
 
 
@@ -109,11 +146,17 @@ WITH naver_mapping AS (
 		LEFT JOIN "ad_mapping3" AS m ON (a."B" = m.campaign AND a."D" = m.adgroup)
 		WHERE m.campaign IS NULL OR m.adgroup IS NULL -- AND reg_date >= '2023-03-01'
 		Order BY reg_date DESC
-		LIMIT 100
+		--LIMIT 100
 )
 
 SELECT DISTINCT id, "B", "D"
 FROM "naver_mapping"
+
+
+SELECT *
+FROM "ad_view7"
+WHERE store IS null
+
 
 
 -- 쿠팡 상품광고 매핑 누락 확인

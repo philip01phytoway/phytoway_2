@@ -64,14 +64,37 @@ GROUP BY yyww
 ORDER BY yyww DESC
 
 
+-- 6. 일별 누적고객수
 
 
-SELECT SUM(prd_amount_mod)
-FROM "order_batch" 
-WHERE order_date BETWEEN '2023-05-10' AND '2023-05-16'
+
+-- 7. 브랜드별 월매출
+SELECT yymm, brand, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+GROUP BY yymm, brand
+Order BY yymm DESC, price DESC
 
 
-LIMIT 1000
+
+-- 8. 브랜드별 월매출
+SELECT yymm, nick, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+GROUP BY yymm, nick
+Order BY yymm DESC, price DESC
+
+
+
+
+
+
+
+-- 7. 브랜드별 월매출
+SELECT store, brand, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+WHERE yymm = '2023-05'
+GROUP BY store, brand
+Order BY yymm DESC, price DESC
+
 
 
 -- 쿼리문 추출과 함께 기초적인 기술통계를 하면 좋겠다.
