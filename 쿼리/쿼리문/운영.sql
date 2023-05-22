@@ -298,9 +298,28 @@ SELECT 	yymm,
 				END) AS "재구매매출"
 				
 FROM "order_batch"
+WHERE order_status <> '주문'
 GROUP BY yymm
 ORDER BY yymm DESC
 
+
+
+
+SELECT *
+FROM "stock_log" AS s
+LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
+LEFT JOIN "product" AS p ON (b.product_no = p.no)
+WHERE p.nick = '판토모나하이퍼포머'
+Order BY crdate desc
+
+
+SELECT *
+FROM "stock_log"
+
+
+
+SELECT *
+FROM "bundle"
 
 
 
@@ -309,8 +328,69 @@ ORDER BY yymm DESC
 
 SELECT * --SUM(order_cnt), COUNT(DISTINCT KEY)
 FROM "order_batch"
-WHERE all_cust_type = '신규' AND yymm = '2023-04'
-AND order_cnt >= 0
+WHERE all_cust_type = '신규'-- AND yymm = '2023-04'
+AND order_cnt < 0
+
+
+SELECT * --SUM(order_cnt), COUNT(DISTINCT KEY)
+FROM "order_batch"
+WHERE all_cust_type = '재구매'-- AND yymm = '2023-04'
+AND order_cnt < 0
+
+
+
+SELECT *
+FROM 	(
+			SELECT 	*, 
+						rank() over(partition BY KEY Order BY order_date_time) AS rank
+			FROM "order_batch"
+			
+		) AS t
+WHERE order_status = '취소' AND all_cust_type = '재구매' AND rank = 2
+
+
+SELECT *
+FROM "order_batch"
+WHERE order_name = '배시연'
+
+
+all_cust_type = '재구매' AND rank = 1
+
+WHERE order_status = '취소'
+
+
+SELECT *, 
+			CASE 
+				WHEN order_id <> '' AND phytoway = 'y' THEN
+					RANK() OVER (PARTITION BY key ORDER BY order_date_time)
+			END AS rank 
+FROM "order_batch"
+WHERE KEY = '강유리hot1****'
+
+
+
+
+
+'권남진01046065497'
+
+
+'강대성01030103033'
+
+
+'김재환kj*****@na'
+AND phytoway = 'y'
+
+
+order_id = '26000180035391'
+
+
+
+
+
+'황현hwan****'
+
+'강은지rk*****@na'
+
 
 -1 : 16
 0 : 80
