@@ -1,5 +1,106 @@
 -- 데이터 현황파악
 
+---------------------------------
+
+-- 주문
+
+---------------------------------
+
+-- 수집 여부 확인
+-- 매핑 누락, 중복 확인
+-- 값 맞는지 대조
+-- 주요 데이터 파악
+
+
+-- 1. 이지어드민 주문수집 여부 확인
+SELECT order_date, *
+FROM "EZ_Order"
+Order BY order_date desc
+LIMIT 10000
+
+
+-- 2. 네이버 주문수집 여부 확인
+SELECT 	"paymentDate", *
+FROM 		"naver_order_product" AS n
+LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+LEFT JOIN "product" AS p ON (o."product_no" = p."no")
+WHERE 	"paymentDate" IS NOT NULL 
+Order BY "paymentDate" DESC
+LIMIT 10000
+
+
+-- 3. 쿠팡 주문수집 여부 확인
+SELECT "orderedAt", *
+FROM "coupang_order"
+WHERE "orderedAt" IS NOT NULL
+Order BY "orderedAt" DESC
+LIMIT 10000
+
+
+-- 4. 이지어드민 매핑 누락 확인 (스토어)
+-- B2B_제트배송은 판매가 아니라 재고이동이다.
+SELECT DISTINCT shop_name
+FROM	"EZ_Order" as o
+LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
+WHERE s.ez_store_code IS NULL
+
+
+-- 5. 이지어드민 매핑 누락 확인 (번들)
+SELECT DISTINCT p.name
+FROM	"EZ_Order" as o,																		
+		jsonb_to_recordset(o.order_products) as p(																	
+			name character varying(255),																
+			product_id character varying(255)
+		)
+LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
+LEFT JOIN "product" as pp on (b.product_no = pp.no)
+WHERE b.ez_code IS NULL 
+-- p.name IS null
+
+
+-- 6. 이지어드민 매핑 누락 확인 (상품)
+SELECT DISTINCT p.name
+FROM	"EZ_Order" as o,																		
+		jsonb_to_recordset(o.order_products) as p(																	
+			name character varying(255),																
+			product_id character varying(255)
+		)
+LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
+LEFT JOIN "product" as pp on (b.product_no = pp.no)
+WHERE pp.no IS NULL 
+
+
+
+-- 5. 이지어드민 매핑 중복 확인 (상품, 스토어)
+
+
+
+-- 5. 네이버 매핑 누락 확인
+SELECT DISTINCT "optionCode", "productName", "productOption"
+FROM "naver_order_product" AS o
+LEFT JOIN "naver_option" AS op ON (o."optionCode" = op."option_code")
+WHERE op."option_code" IS NULL 
+--AND o."deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
+
+
+-- 6. 네이버 매핑 중복 확인
+
+
+-- 7. 쿠팡 매핑 누락 확인
+SELECT DISTINCT p."vendorItemName", p."vendorItemId", op."option"
+FROM "coupang_order" AS o,																
+		json_to_recordset(o."orderItems") as p(	
+			"vendorItemName" CHARACTER varying(255),																									
+			"vendorItemId" CHARACTER varying(255)											
+		)
+LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
+WHERE op."option" IS NULL 
+
+
+-- 8. 쿠팡 매핑 중복 확인
+
+
+
 --  1. 일별 매출 합계
 SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
 FROM "order_batch"
@@ -45,18 +146,17 @@ SELECT 	yyww,
 			SUM(CASE 
 					WHEN all_cust_type = '신규' THEN order_cnt
 					ELSE 0
-				END) AS new_order_cnt,
+				END) AS "신규주문건수",
 			
 			SUM(CASE 
 					WHEN all_cust_type = '재구매' THEN order_cnt
 					ELSE 0
-				END) AS re_order_cnt,
+				END) AS "재구매주문건수",
 			
 			COUNT(DISTINCT 
 				CASE 
 					WHEN all_cust_type = '신규' THEN key
-					
-				END) AS new_cust_cnt
+				END) AS "신규고객수"
 			
 				
 FROM "order_batch"
@@ -76,7 +176,7 @@ Order BY yymm DESC, price DESC
 
 
 
--- 8. 브랜드별 월매출
+-- 8. 제품별 월매출
 SELECT yymm, nick, SUM(prd_amount_mod) AS price
 FROM "order_batch"
 GROUP BY yymm, nick
@@ -87,13 +187,60 @@ Order BY yymm DESC, price DESC
 
 
 
+---------------------------------
 
--- 7. 브랜드별 월매출
-SELECT store, brand, SUM(prd_amount_mod) AS price
-FROM "order_batch"
-WHERE yymm = '2023-05'
-GROUP BY store, brand
-Order BY yymm DESC, price DESC
+-- 광고
+
+---------------------------------
+
+-- 광고 데이터 수집 여부는 admin과 sum으로 대조해서 검증을 하자.
+-- 동시에 데이터 정확성도 검증하는 것.
+-- 9. 광고 비용, 노출, 클릭 (어드민과 대조)
+SELECT 	yymm, channel, account, 
+			SUM(cost) AS cost, SUM(imp_cnt) AS imp_cnt, SUM(click_cnt) AS click_cnt, SUM(order_cnt) AS order_cnt, SUM(order_price) AS order_price
+FROM "ad_batch"
+WHERE yymmdd IS NOT NULL
+GROUP BY yymm, channel, account
+Order BY yymm DESC, channel, account
+
+
+-- 10. 네이버 광고 매핑 누락 확인
+WITH naver_mapping AS (
+		SELECT DISTINCT id, "B", "D", reg_date
+		FROM "AD_Naver" AS a
+		LEFT JOIN "ad_mapping3" AS m ON (a."B" = m.campaign AND a."D" = m.adgroup)
+		WHERE m.campaign IS NULL OR m.adgroup IS NULL -- AND reg_date >= '2023-03-01'
+		Order BY reg_date DESC
+		--LIMIT 100
+)
+
+SELECT DISTINCT id, "B", "D"
+FROM "naver_mapping"
+
+
+-- 11. 네이버 광고 매핑 중복 확인
+-- 혹은 매핑 전 데이터와 매핑 후 데이터의 행 개수를 대조하기.
+SELECT campaign, adgroup, COUNT(*)
+FROM "ad_mapping3" 
+WHERE channel_no = 1
+GROUP BY campaign, adgroup
+HAVING COUNT(*) > 1
+
+
+-- 12. 네이버 광고 월별 키워드별 cpc, roas 파악
+SELECT yymm, keyword, SUM(cost) AS cost, SUM(click_cnt) AS click_cnt, SUM(cost) / SUM(click_cnt) AS cpc, SUM(order_price) AS order_price, LEFT((SUM(order_price)::float / SUM(cost)::FLOAT)::TEXT, 4) AS roas
+FROM "ad_batch"
+WHERE channel = '네이버' AND cost > 0 --(cost > 0 OR click_cnt > 0
+GROUP BY yymm, keyword
+Order BY yymm DESC, cost DESC
+-- 내가 평균의 함정에 빠진건가? cpc가 어느 구간에선 높을 수가 있나?
+-- 키워드가 -인건 뭐지? : 쇼검
+-- 제품별 효율도 봐야겠네.
+
+
+SELECT *
+FROM "ad_batch"
+WHERE channel = '네이버' AND cost = 0 AND imp_cnt > 0
 
 
 
@@ -212,39 +359,7 @@ LIMIT 1000
 -- 주문 매핑은 상품과 스토어이다.
 
 
--- EZ_Order에 스토어 매핑 누락 확인
-SELECT DISTINCT shop_name
-FROM	"EZ_Order" as o
-LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
-WHERE s.ez_store_code IS NULL
--- B2B_제트배송은 판매가 아니라 재고이동이다.
 
-
--- EZ_Order에 번들 매핑 누락 확인
-SELECT DISTINCT p.name
-FROM	"EZ_Order" as o,																		
-		jsonb_to_recordset(o.order_products) as p(																	
-			name character varying(255),																
-			product_id character varying(255)
-		)
-LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
-LEFT JOIN "product" as pp on (b.product_no = pp.no)
-WHERE b.ez_code IS NULL 
--- p.name IS null
-
-
-
-
--- EZ_Order에 상품 매핑 누락 확인
-SELECT DISTINCT p.name
-FROM	"EZ_Order" as o,																		
-		jsonb_to_recordset(o.order_products) as p(																	
-			name character varying(255),																
-			product_id character varying(255)
-		)
-LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
-LEFT JOIN "product" as pp on (b.product_no = pp.no)
-WHERE pp.no IS NULL 
 
 
 

@@ -243,11 +243,93 @@ AND recv_name NOT LIKE '%전현빈%'
 
 
 
+SELECT *--, rank() over(partition BY KEY Order BY order_date_time) AS rank
+FROM "order_batch"
+WHERE yymm = '2023-04' AND all_cust_type = '신규'
+Order BY KEY
 
 
->>>>>>> c0fdf1b5179f64b41ca4aae5fc8c77e3bca6f86a
 
 
+SELECT yymm, SUM(order_cnt)
+FROM "order_batch"
+WHERE all_cust_type = '신규' AND order_cnt < 0
+GROUP BY yymm
+Order BY yymm desc
+
+KEY = '김영철17137'
+
+GROUP BY yyww
+ORDER BY yyww DESC
+
+
+
+
+SELECT 	yymm,
+
+			SUM(CASE 
+					WHEN all_cust_type = '신규' THEN order_cnt
+					ELSE 0
+				END) AS "신규주문건수",
+			
+			SUM(CASE 
+					WHEN all_cust_type = '재구매' THEN order_cnt
+					ELSE 0
+				END) AS "재구매주문건수",
+			
+			COUNT(DISTINCT 
+				CASE 
+					WHEN all_cust_type = '신규' THEN key
+				END) AS "신규고객수",
+				
+			COUNT(DISTINCT 
+				CASE 
+					WHEN all_cust_type = '재구매' THEN key
+				END) AS "재구매고객수",
+			
+			SUM(CASE 
+					WHEN all_cust_type = '신규' THEN prd_amount_mod
+					ELSE 0
+				END) AS "신규매출",
+			
+			SUM(CASE 
+					WHEN all_cust_type = '재구매' THEN prd_amount_mod
+					ELSE 0
+				END) AS "재구매매출"
+				
+FROM "order_batch"
+GROUP BY yymm
+ORDER BY yymm DESC
+
+
+
+
+5062 / 5100
+
+
+SELECT * --SUM(order_cnt), COUNT(DISTINCT KEY)
+FROM "order_batch"
+WHERE all_cust_type = '신규' AND yymm = '2023-04'
+AND order_cnt >= 0
+
+-1 : 16
+0 : 80
+1 : 5078
+
+GROUP BY yymm
+Order BY yymm desc
+
+
+SELECT SUM("new")
+FROM (
+			SELECT *, 	
+							CASE 
+								WHEN all_cust_type = '신규' THEN order_cnt
+								ELSE 0
+							END AS "new"
+			FROM "order_batch"
+			WHERE all_cust_type = '신규' AND yymm = '2023-04'
+		) AS t
 
 
 
