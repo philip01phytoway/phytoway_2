@@ -234,39 +234,117 @@ GROUP BY trans_date, onnuri_code, onnuri_name
 
 
 
+------
+판토모나하이퍼포머만
+-----
+
+-- 기준 재고
+SELECT base_date, w.name AS "warehouse", p.onnuri_code, p.onnuri_name, s.qty, '기준재고' AS stock_type
+FROM "stock_base" AS s
+LEFT JOIN "warehouse" AS w ON (s.warehouse_no = w.no)
+LEFT JOIN "product" AS p ON (s.product_no = p.no)
+
+UNION ALL 
+
+-- 코린트 입고
+SELECT LEFT(crdate, 10) AS in_date, '코린트' AS "warehouse", p.onnuri_code, p.onnuri_name, b.qty * s.qty AS qty, '입고' AS stock_type
+FROM "stock_log" AS s 
+LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
+LEFT JOIN "product" AS p ON (b.product_no = p.no)
+WHERE job = 'in' AND crdate > '2023-04-28' AND p.nick = '판토모나하이퍼포머'
+
+
+-- 코린트 --> 풀필먼트 재고이동 | 코린트에서 출고하는 관점
+SELECT LEFT(crdate, 10) AS in_date, '코린트' AS "warehouse", p.onnuri_code, p.onnuri_name, b.qty * s.qty * -1 AS qty, '재고이동' AS stock_type
+FROM "stock_log" AS s 
+LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
+LEFT JOIN "product" AS p ON (b.product_no = p.no)
+WHERE job = 'trans' AND crdate > '2023-04-28' AND p.nick = '판토모나하이퍼포머' AND s.qty = 4800
+
+
+-- 코린트 --> 풀필먼트 재고이동 | 풀필먼트에 입고하는 관점
+SELECT LEFT(crdate, 10) AS in_date, '스마트스토어_풀필먼트' AS "warehouse", p.onnuri_code, p.onnuri_name, b.qty * s.qty AS qty, '입고' AS stock_type
+FROM "stock_log" AS s 
+LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
+LEFT JOIN "product" AS p ON (b.product_no = p.no)
+WHERE job = 'trans' AND crdate > '2023-04-28' AND p.nick = '판토모나하이퍼포머' AND s.qty = 4800
 
 
 
+-- 코린트 --> 풀필먼트, 제트배송 재고이동 | 코린트에서 출고하는 관점
+SELECT 	
+			trans_date, '코린트' AS "warehouse", onnuri_code, onnuri_name,
+			out_qty * -1 AS out_qty, '재고이동' AS "stock_type"
+FROM 	(
+			SELECT	
+
+						left(order_date, 10) AS order_date,
+						o2.shop_id, 
+						o2.brand, o2.nick, o2.product_qty * o2.order_qty AS out_qty,
+						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type, 
+						left(trans_date_pos, 10) AS trans_date, o2.product_id, o2.product_qty , o2.order_qty
+
+			FROM (
+						SELECT *, p.qty AS order_qty, b.qty AS product_qty
+								
+						FROM	"EZ_Order" as o,																		
+								jsonb_to_recordset(o.order_products) as p(																	
+									name character varying(255),																
+									product_id character varying(255),																
+									qty INTEGER														
+								)
+						LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
+						LEFT JOIN "product" as pp on (b.product_no = pp.no)																		
+						WHERE	order_id NOT IN (SELECT order_num FROM "Non_Order")	
+								 AND pp.term > 0 
+					) AS o2
+		) AS o3
+LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
+WHERE s.no IN (48, 49) AND onnuri_type = '판매분매입' 
+AND trans_date <> '' AND trans_date IS NOT NULL
+AND nick = '판토모나하이퍼포머' AND trans_date > '2023-04-28'
 
 
 
-SELECT 	*, 
+-- 코린트 --> 풀필먼트, 제트배송 재고이동 | 코린트에서 출고하는 관점
+SELECT 	
+			trans_date, 
 			CASE 
-				WHEN order_id = '' THEN 'B2B'
-				WHEN order_id <> '' THEN 'B2C'
-			END AS store_type
-FROM "order_batch" 
-WHERE onnuri_type = '판매분매입' AND order_date >= '2023-05-01' 
-AND trans_date <> '' AND trans_date IS NOT NULL AND order_status <> '취소'
-AND store = '스마트스토어_풀필먼트' AND order_status = '반품'
+				WHEN 
+			'코린트' AS "warehouse", onnuri_code, onnuri_name,
+			out_qty * -1 AS out_qty, '재고이동' AS "stock_type"
+FROM 	(
+			SELECT	
+
+						left(order_date, 10) AS order_date,
+						o2.shop_id, 
+						o2.brand, o2.nick, o2.product_qty * o2.order_qty AS out_qty,
+						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type, 
+						left(trans_date_pos, 10) AS trans_date, o2.product_id, o2.product_qty , o2.order_qty
+
+			FROM (
+						SELECT *, p.qty AS order_qty, b.qty AS product_qty
+								
+						FROM	"EZ_Order" as o,																		
+								jsonb_to_recordset(o.order_products) as p(																	
+									name character varying(255),																
+									product_id character varying(255),																
+									qty INTEGER														
+								)
+						LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
+						LEFT JOIN "product" as pp on (b.product_no = pp.no)																		
+						WHERE	order_id NOT IN (SELECT order_num FROM "Non_Order")	
+								 AND pp.term > 0 
+					) AS o2
+		) AS o3
+LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
+WHERE s.no IN (48, 49) AND onnuri_type = '판매분매입' 
+AND trans_date <> '' AND trans_date IS NOT NULL
+AND nick = '판토모나하이퍼포머' AND trans_date > '2023-04-28'
+
 
 
 
 SELECT *
-FROM "naver_order_product"
-WHERE "orderId" = '2023043016797671'
-
-SELECT *
-FROM "order_batch"
-WHERE order_id = '2023043016797671'
-
-SELECT *
-FROM "order_batch"
-WHERE order_id = '2023042593256971'
-
-
-
-
-SELECT *
-FROM "order_batch"
-WHERE order_id = '12000176621842'
+FROM "stock_log"
+WHERE job = 'trans'

@@ -265,42 +265,12 @@ ORDER BY yyww DESC
 
 
 
-SELECT 	yymm,
 
-			SUM(CASE 
-					WHEN all_cust_type = '신규' THEN order_cnt
-					ELSE 0
-				END) AS "신규주문건수",
-			
-			SUM(CASE 
-					WHEN all_cust_type = '재구매' THEN order_cnt
-					ELSE 0
-				END) AS "재구매주문건수",
-			
-			COUNT(DISTINCT 
-				CASE 
-					WHEN all_cust_type = '신규' THEN key
-				END) AS "신규고객수",
-				
-			COUNT(DISTINCT 
-				CASE 
-					WHEN all_cust_type = '재구매' THEN key
-				END) AS "재구매고객수",
-			
-			SUM(CASE 
-					WHEN all_cust_type = '신규' THEN prd_amount_mod
-					ELSE 0
-				END) AS "신규매출",
-			
-			SUM(CASE 
-					WHEN all_cust_type = '재구매' THEN prd_amount_mod
-					ELSE 0
-				END) AS "재구매매출"
-				
+SELECT yyww, all_cust_type, SUM(order_cnt) AS order_cnt
 FROM "order_batch"
-WHERE order_status <> '주문'
-GROUP BY yymm
-ORDER BY yymm DESC
+WHERE all_cust_type <> ''
+GROUP BY yyww, all_cust_type
+Order BY yyww desc
 
 
 
@@ -342,74 +312,46 @@ AND order_cnt < 0
 SELECT *
 FROM 	(
 			SELECT 	*, 
-						rank() over(partition BY KEY Order BY order_date_time) AS rank
+						rank() over(partition BY KEY, order_status Order BY order_date_time) AS rank
 			FROM "order_batch"
-			
+			WHERE KEY = '고재준kojj****'
 		) AS t
-WHERE order_status = '취소' AND all_cust_type = '재구매' AND rank = 2
+WHERE order_status = '취소' AND all_cust_type = '재구매' AND rank = 1
+
 
 
 SELECT *
 FROM "order_batch"
-WHERE order_name = '배시연'
+WHERE order_id = '2022062740088761'
 
-
-all_cust_type = '재구매' AND rank = 1
-
-WHERE order_status = '취소'
-
-
-SELECT *, 
-			CASE 
-				WHEN order_id <> '' AND phytoway = 'y' THEN
-					RANK() OVER (PARTITION BY key ORDER BY order_date_time)
-			END AS rank 
-FROM "order_batch"
-WHERE KEY = '강유리hot1****'
+SELECT *
+FROM "naver_order_product"
+WHERE "orderId" = '2022062740088761'
 
 
 
-
-
-'권남진01046065497'
-
-
-'강대성01030103033'
-
-
-'김재환kj*****@na'
-AND phytoway = 'y'
-
-
-order_id = '26000180035391'
-
-
-
-
-
-'황현hwan****'
-
-'강은지rk*****@na'
-
-
--1 : 16
-0 : 80
-1 : 5078
-
-GROUP BY yymm
-Order BY yymm desc
-
-
-SELECT SUM("new")
-FROM (
-			SELECT *, 	
-							CASE 
-								WHEN all_cust_type = '신규' THEN order_cnt
-								ELSE 0
-							END AS "new"
+SELECT *
+FROM 	(
+			SELECT 	*, 
+						rank() over(partition BY KEY, order_status Order BY order_date_time) AS rank
 			FROM "order_batch"
-			WHERE all_cust_type = '신규' AND yymm = '2023-04'
+			
 		) AS t
+WHERE order_status IN ('취소', '반품') AND all_cust_type = '재구매' AND rank = 1
+
+
+
+
+SELECT *
+FROM 	(
+			SELECT 	*, 
+						rank() over(partition BY KEY, order_status Order BY order_date_time) AS rank
+			FROM "order_batch"
+			
+		) AS t
+WHERE order_status IN ('취소', '반품') AND all_cust_type = '신규' AND rank > 1
+
+
 
 
 

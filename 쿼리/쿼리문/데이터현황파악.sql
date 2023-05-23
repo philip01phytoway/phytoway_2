@@ -141,7 +141,8 @@ LIMIT 1000
 
 
 -- 5. 일별 신규주문건수, 재구매주문건수, 신규고객수, 재구매고객수, 신규매출, 재구매매출 합계
-SELECT 	yyww,
+
+SELECT 	yymm,
 
 			SUM(CASE 
 					WHEN all_cust_type = '신규' THEN order_cnt
@@ -156,15 +157,40 @@ SELECT 	yyww,
 			COUNT(DISTINCT 
 				CASE 
 					WHEN all_cust_type = '신규' THEN key
-				END) AS "신규고객수"
+				END) AS "신규고객수",
+				
+			COUNT(DISTINCT 
+				CASE 
+					WHEN all_cust_type = '재구매' THEN key
+				END) AS "재구매고객수",
 			
+			SUM(CASE 
+					WHEN all_cust_type = '신규' THEN prd_amount_mod
+					ELSE 0
+				END) AS "신규매출",
+			
+			SUM(CASE 
+					WHEN all_cust_type = '재구매' THEN prd_amount_mod
+					ELSE 0
+				END) AS "재구매매출"
 				
 FROM "order_batch"
-GROUP BY yyww
-ORDER BY yyww DESC
+--WHERE order_status <> '주문'
+GROUP BY yymm
+ORDER BY yymm DESC
 
 
--- 6. 일별 누적고객수
+
+--제품별 누적고객수
+SELECT brand, COUNT(DISTINCT KEY) AS cust_cnt
+FROM "order_batch"
+GROUP BY brand
+Order BY cust_cnt desc
+
+
+
+
+-- 월별 누적고객수
 
 
 
