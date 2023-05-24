@@ -9,7 +9,7 @@ SELECT yymm, yyww, order_date, 'B2B' AS "store_type", SUM(prd_amount_mod) AS pri
 FROM "order_batch"
 WHERE order_id = '' AND yyww >= '2023-10'
 GROUP BY yymm, yyww, order_date
---Order BY order_date DESC
+Order BY order_date ASC
 
 UNION ALL
 
@@ -45,3 +45,38 @@ FROM 	(
 WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod <= 500000 AND cust_type IS NOT NULL AND yyww >= '2023-10'
 GROUP BY yymm, yyww, order_date, cust_type
 --Order BY order_date DESC
+
+
+
+
+
+
+
+-------------------------------------------------------
+데이터분석팀 wbr 매출 예측 쿼리
+-------------------------------------------------------
+
+-- B2B
+SELECT y.yymm, y.yyww, y.yymmdd, 'B2B' AS "store_type", price
+FROM "YMD2" AS y
+LEFT JOIN (
+				SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
+				FROM "order_batch"
+				WHERE order_id = '' AND phytoway = 'y' AND order_date < '2023-05-24'
+				GROUP BY yymm, yyww, order_date
+			) AS o ON (y.yymmdd = o.order_date)
+WHERE y.yyww > '2023-12'
+Order BY y.yymmdd asc
+
+
+-- 리셀러
+SELECT y.yymm, y.yyww, y.yymmdd, '리셀러' AS "store_type", price
+FROM "YMD2" AS y
+LEFT JOIN (
+				SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
+				FROM "order_batch"
+				WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod > 500000 AND order_date < '2023-05-24'
+				GROUP BY yymm, yyww, order_date
+			) AS o ON (y.yymmdd = o.order_date)
+WHERE y.yyww > '2023-12'
+Order BY y.yymmdd ASC

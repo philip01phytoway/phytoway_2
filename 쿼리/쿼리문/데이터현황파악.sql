@@ -140,8 +140,7 @@ Order BY order_date DESC
 LIMIT 1000
 
 
--- 5. 일별 신규주문건수, 재구매주문건수, 신규고객수, 재구매고객수, 신규매출, 재구매매출 합계
-
+-- 5. 월별 신규주문건수, 재구매주문건수, 신규고객수, 재구매고객수, 신규매출, 재구매매출 합계
 SELECT 	yymm,
 
 			SUM(CASE 
@@ -175,9 +174,51 @@ SELECT 	yymm,
 				END) AS "재구매매출"
 				
 FROM "order_batch"
---WHERE order_status <> '주문'
+WHERE order_cnt = 0
 GROUP BY yymm
 ORDER BY yymm DESC
+
+
+-- 6. 일별 신규주문건수, 재구매주문건수, 신규고객수, 재구매고객수, 신규매출, 재구매매출 합계
+SELECT 	order_date,
+
+			SUM(CASE 
+					WHEN all_cust_type = '신규' THEN order_cnt
+					ELSE 0
+				END) AS "신규주문건수",
+			
+			SUM(CASE 
+					WHEN all_cust_type = '재구매' THEN order_cnt
+					ELSE 0
+				END) AS "재구매주문건수",
+			
+			COUNT(DISTINCT 
+				CASE 
+					WHEN all_cust_type = '신규' THEN key
+				END) AS "신규고객수",
+				
+			COUNT(DISTINCT 
+				CASE 
+					WHEN all_cust_type = '재구매' THEN key
+				END) AS "재구매고객수",
+			
+			SUM(CASE 
+					WHEN all_cust_type = '신규' THEN prd_amount_mod
+					ELSE 0
+				END) AS "신규매출",
+			
+			SUM(CASE 
+					WHEN all_cust_type = '재구매' THEN prd_amount_mod
+					ELSE 0
+				END) AS "재구매매출"
+				
+FROM "order_batch"
+WHERE order_date >= '2023-05-01'
+GROUP BY order_date
+ORDER BY order_date DESC
+
+
+
 
 
 

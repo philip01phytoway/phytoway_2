@@ -238,8 +238,18 @@ GROUP BY trans_date, onnuri_code, onnuri_name
 판토모나하이퍼포머만
 -----
 
--- 기준 재고
-SELECT base_date, w.name AS "warehouse", p.onnuri_code, p.onnuri_name, s.qty, '기준재고' AS stock_type
+SELECT *
+FROM "stock_base"
+
+
+
+
+SELECT *
+FROM (
+
+
+-- 코린트 기준 재고 (2023-05-22)
+SELECT base_date, w.name AS warehouse, s.qty, p.onnuri_code, p.onnuri_name, '기준재고' AS "stock_type"
 FROM "stock_base" AS s
 LEFT JOIN "warehouse" AS w ON (s.warehouse_no = w.no)
 LEFT JOIN "product" AS p ON (s.product_no = p.no)
@@ -247,51 +257,34 @@ LEFT JOIN "product" AS p ON (s.product_no = p.no)
 UNION ALL 
 
 -- 코린트 입고
-SELECT LEFT(crdate, 10) AS in_date, '코린트' AS "warehouse", p.onnuri_code, p.onnuri_name, b.qty * s.qty AS qty, '입고' AS stock_type
-FROM "stock_log" AS s 
+SELECT LEFT(crdate, 10) AS in_date, '코린트' as warehouse, s.qty * b.qty AS in_qty, p.onnuri_code, p.onnuri_name, '입고' AS "stock_type"
+FROM "stock_log" AS s
 LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
 LEFT JOIN "product" AS p ON (b.product_no = p.no)
-WHERE job = 'in' AND crdate > '2023-04-28' AND p.nick = '판토모나하이퍼포머'
+WHERE job = 'in' AND p.nick = '판토모나하이퍼포머' AND crdate > '2023-05-22'
+--Order BY crdate desc
 
 
--- 코린트 --> 풀필먼트 재고이동 | 코린트에서 출고하는 관점
-SELECT LEFT(crdate, 10) AS in_date, '코린트' AS "warehouse", p.onnuri_code, p.onnuri_name, b.qty * s.qty * -1 AS qty, '재고이동' AS stock_type
-FROM "stock_log" AS s 
-LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
-LEFT JOIN "product" AS p ON (b.product_no = p.no)
-WHERE job = 'trans' AND crdate > '2023-04-28' AND p.nick = '판토모나하이퍼포머' AND s.qty = 4800
+UNION ALL 
 
-
--- 코린트 --> 풀필먼트 재고이동 | 풀필먼트에 입고하는 관점
-SELECT LEFT(crdate, 10) AS in_date, '스마트스토어_풀필먼트' AS "warehouse", p.onnuri_code, p.onnuri_name, b.qty * s.qty AS qty, '입고' AS stock_type
-FROM "stock_log" AS s 
-LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
-LEFT JOIN "product" AS p ON (b.product_no = p.no)
-WHERE job = 'trans' AND crdate > '2023-04-28' AND p.nick = '판토모나하이퍼포머' AND s.qty = 4800
-
-
-
--- 코린트 --> 풀필먼트, 제트배송 재고이동 | 코린트에서 출고하는 관점
-SELECT 	
-			trans_date, '코린트' AS "warehouse", onnuri_code, onnuri_name,
-			out_qty * -1 AS out_qty, '재고이동' AS "stock_type"
-FROM 	(
+-- 코린트 --> 풀필먼트, 제트배송 재고이동 | 코린트에서 출고한 관점
+-- 판매처
+SELECT trans_date, '코린트' AS warehouse,
+			out_qty * -1 AS out_qty, o3.onnuri_code, o3.onnuri_name, '재고이동' AS stock_type
+FROM (
 			SELECT	
-
-						left(order_date, 10) AS order_date,
-						o2.shop_id, 
-						o2.brand, o2.nick, o2.product_qty * o2.order_qty AS out_qty,
+						left(order_date, 10) AS order_date, o2.shop_id, o2.nick,
+						o2.product_qty * o2.order_qty AS out_qty,
 						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type, 
-						left(trans_date_pos, 10) AS trans_date, o2.product_id, o2.product_qty , o2.order_qty
+						left(trans_date_pos, 10) AS trans_date
 
 			FROM (
 						SELECT *, p.qty AS order_qty, b.qty AS product_qty
-								
 						FROM	"EZ_Order" as o,																		
 								jsonb_to_recordset(o.order_products) as p(																	
 									name character varying(255),																
 									product_id character varying(255),																
-									qty INTEGER														
+									qty integer																
 								)
 						LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
 						LEFT JOIN "product" as pp on (b.product_no = pp.no)																		
@@ -300,36 +293,36 @@ FROM 	(
 					) AS o2
 		) AS o3
 LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
-WHERE s.no IN (48, 49) AND onnuri_type = '판매분매입' 
-AND trans_date <> '' AND trans_date IS NOT NULL
-AND nick = '판토모나하이퍼포머' AND trans_date > '2023-04-28'
+WHERE s.no IN (48, 49) AND onnuri_type = '판매분매입' AND trans_date > '2023-05-22'
+--AND o3.nick = '판토모나하이퍼포머'
+
+
+UNION ALL 
 
 
 
--- 코린트 --> 풀필먼트, 제트배송 재고이동 | 코린트에서 출고하는 관점
-SELECT 	
-			trans_date, 
+-- 코린트 --> 풀필먼트, 제트배송 재고이동 | 풀필먼트, 제트배송에 입고한 관점
+-- 판매처
+SELECT trans_date, 
 			CASE 
-				WHEN 
-			'코린트' AS "warehouse", onnuri_code, onnuri_name,
-			out_qty * -1 AS out_qty, '재고이동' AS "stock_type"
-FROM 	(
+				WHEN s.no = 48 THEN '쿠팡_제트배송'
+				WHEN s.no = 49 THEN '스마트스토어_풀필먼트'
+			END AS warehouse,
+			out_qty, o3.onnuri_code, o3.onnuri_name, '재고이동' AS stock_type
+FROM (
 			SELECT	
-
-						left(order_date, 10) AS order_date,
-						o2.shop_id, 
-						o2.brand, o2.nick, o2.product_qty * o2.order_qty AS out_qty,
+						left(order_date, 10) AS order_date, o2.shop_id, o2.nick,
+						o2.product_qty * o2.order_qty AS out_qty,
 						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type, 
-						left(trans_date_pos, 10) AS trans_date, o2.product_id, o2.product_qty , o2.order_qty
+						left(trans_date_pos, 10) AS trans_date
 
 			FROM (
 						SELECT *, p.qty AS order_qty, b.qty AS product_qty
-								
 						FROM	"EZ_Order" as o,																		
 								jsonb_to_recordset(o.order_products) as p(																	
 									name character varying(255),																
 									product_id character varying(255),																
-									qty INTEGER														
+									qty integer																
 								)
 						LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
 						LEFT JOIN "product" as pp on (b.product_no = pp.no)																		
@@ -338,13 +331,134 @@ FROM 	(
 					) AS o2
 		) AS o3
 LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
-WHERE s.no IN (48, 49) AND onnuri_type = '판매분매입' 
-AND trans_date <> '' AND trans_date IS NOT NULL
-AND nick = '판토모나하이퍼포머' AND trans_date > '2023-04-28'
+WHERE s.no IN (48, 49) AND onnuri_type = '판매분매입' AND trans_date > '2023-05-22'
+--AND o3.nick = '판토모나하이퍼포머'
+
+
+UNION ALL 
+
+
+-- 코린트 조정
+SELECT LEFT(crdate, 10) AS out_date, '코린트' AS warehouse, s.qty * b.qty AS arrange_qty, p.onnuri_code, p.onnuri_name, '조정' AS stock_type
+FROM "stock_log" AS s
+LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
+LEFT JOIN "product" AS p ON (b.product_no = p.no)
+WHERE job = 'arrange' AND crdate > '2023-05-22'
+--AND p.nick = '판토모나하이퍼포머'
+
+
+UNION ALL 
+
+-- 코린트 반품입고
+SELECT LEFT(crdate, 10) AS out_date, '코린트' AS warehouse, s.qty * b.qty AS arrange_qty, p.onnuri_code, p.onnuri_name, '반품입고' AS stock_type
+FROM "stock_log" AS s
+LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
+LEFT JOIN "product" AS p ON (b.product_no = p.no)
+WHERE job = 'retin' AND crdate > '2023-05-22'
+--AND p.nick = '판토모나하이퍼포머'
+
+
+UNION ALL 
+
+
+-- 코린트 출고 (반품 제외하고 주문만)
+SELECT 	trans_date, "warehouse", SUM(out_qty) AS out_qty, onnuri_code, onnuri_name, '출고' AS "stock_type"
+FROM (
+SELECT 	trans_date, 
+			CASE 
+				WHEN store = '스마트스토어_풀필먼트' THEN '스마트스토어_풀필먼트'
+				WHEN store = '쿠팡_제트배송' THEN '쿠팡_제트배송'
+				ELSE '코린트'
+			END AS "warehouse", 
+			SUM(out_qty) * -1 AS out_qty, onnuri_code, onnuri_name
+FROM 	(
+			SELECT 	*
+			FROM "order_batch" 
+			WHERE onnuri_type = '판매분매입' AND trans_date > '2023-05-22' 
+			AND trans_date <> '' AND trans_date IS NOT NULL AND order_status <> '취소' AND order_status <> '반품'
+			--AND nick = '판토모나하이퍼포머'
+		) AS t
+GROUP BY trans_date, onnuri_code, onnuri_name, store
+) AS t
+GROUP BY trans_date, "warehouse", onnuri_code, onnuri_name
+
+UNION ALL 
+
+
+-- 코린트 추가발송
+SELECT 	trans_date, "warehouse", SUM(out_qty) AS out_qty, onnuri_code, onnuri_name, '출고' AS "stock_type"
+FROM (
+SELECT 	
+			trans_date, '코린트' AS "warehouse", SUM(out_qty) * -1 AS out_qty, 
+			onnuri_code, onnuri_name
+FROM 	(
+			SELECT	
+						left(order_date, 10) AS order_date, o2.recv_name,
+						o2.shop_id, 
+						o2.nick, o2.product_qty * o2.order_qty AS out_qty,
+						o2.onnuri_code, o2.onnuri_name, o2.onnuri_type, 
+						left(trans_date_pos, 10) AS trans_date
+			FROM (
+						SELECT *, p.qty AS order_qty, b.qty AS product_qty
+						FROM	"EZ_Order" as o,																		
+								jsonb_to_recordset(o.order_products) as p(																	
+									name character varying(255),																
+									product_id character varying(255),																
+									qty integer															
+								)
+						LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)																	
+						LEFT JOIN "product" as pp on (b.product_no = pp.no)																		
+						WHERE	order_id NOT IN (SELECT order_num FROM "Non_Order")	
+								 AND pp.term > 0
+					) AS o2
+		) AS o3
+LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
+WHERE s.no = 47 AND onnuri_type = '판매분매입' AND recv_name NOT LIKE '%전현빈%'
+AND trans_date <> '' AND trans_date IS NOT NULL AND trans_date > '2023-05-22' 
+--AND nick = '판토모나하이퍼포머'
+GROUP BY trans_date, onnuri_code, onnuri_name
+) AS t
+GROUP BY trans_date, "warehouse", onnuri_code, onnuri_name
+
+
+
+) AS t
+
+
+
+WHERE "warehouse" = '코린트' AND base_date <= '2023-05-23'
+
 
 
 
 
 SELECT *
-FROM "stock_log"
-WHERE job = 'trans'
+FROM "coupang_order"
+WHERE "orderId" IN (16000181733725, 12000181364103)
+
+
+
+
+::text IN (
+
+
+SELECT *
+FROM "order_batch"
+WHERE order_id IN (
+
+SELECT order_id
+FROM "EZ_Order"
+WHERE seq IN (
+501052,
+501045,
+501044,
+500836,
+500807)
+
+)
+
+
+16000181733725
+12000181364103
+
+

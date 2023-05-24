@@ -353,6 +353,29 @@ WHERE order_status IN ('취소', '반품') AND all_cust_type = '신규' AND rank
 
 
 
+SELECT *
+FROM "cost_marketing"
+
+
+SELECT *
+FROM "cost_product"
+
+
+
+
+SELECT *
+FROM "order_batch"
+WHERE all_cust_type <> ''
+
+
+
+
+
+
+
+
+
+
 
 
 -- 써큐시안 선물세트 분리
