@@ -7,9 +7,9 @@
 -- B2B
 SELECT yymm, yyww, order_date, 'B2B' AS "store_type", SUM(prd_amount_mod) AS price
 FROM "order_batch"
-WHERE order_id = '' AND yyww >= '2023-10'
+WHERE order_id = '' AND yyww >= '2023-10' --AND phytoway = 'y'
 GROUP BY yymm, yyww, order_date
-Order BY order_date ASC
+--Order BY order_date ASC
 
 UNION ALL
 
@@ -77,6 +77,61 @@ LEFT JOIN (
 				FROM "order_batch"
 				WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod > 500000 AND order_date < '2023-05-24'
 				GROUP BY yymm, yyww, order_date
+			) AS o ON (y.yymmdd = o.order_date)
+WHERE y.yyww > '2023-12'
+Order BY y.yymmdd ASC
+
+
+-- 신규
+SELECT y.yymm, y.yyww, y.yymmdd, '신규' AS "store_type", price
+FROM "YMD2" AS y
+LEFT JOIN (
+				SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
+				FROM "order_batch"
+				WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod <= 500000 AND order_date < '2023-05-24' AND all_cust_type = '신규'
+				GROUP BY yymm, yyww, order_date
+			) AS o ON (y.yymmdd = o.order_date)
+WHERE y.yyww > '2023-12'
+Order BY y.yymmdd ASC
+
+
+-- 재구매
+SELECT y.yymm, y.yyww, y.yymmdd, '재구매' AS "store_type", price
+FROM "YMD2" AS y
+LEFT JOIN (
+				SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
+				FROM "order_batch"
+				WHERE order_id <> '' AND phytoway = 'y' AND prd_amount_mod <= 500000 AND order_date < '2023-05-24' AND all_cust_type = '재구매'
+				GROUP BY yymm, yyww, order_date
+			) AS o ON (y.yymmdd = o.order_date)
+WHERE y.yyww > '2023-12'
+Order BY y.yymmdd ASC
+
+
+
+-- 유지
+SELECT y.yymm, y.yyww, y.yymmdd, '유지' AS "store_type", price
+FROM "YMD2" AS y
+LEFT JOIN (
+			SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
+			FROM "order_batch"
+			WHERE all_cust_type = '재구매' AND order_date BETWEEN prev_order_date AND prev_dead_date 
+			AND order_id <> '' AND phytoway = 'y' AND prd_amount_mod <= 500000 AND order_date < '2023-05-24'
+			GROUP BY yymm, yyww, order_date
+			) AS o ON (y.yymmdd = o.order_date)
+WHERE y.yyww > '2023-12'
+Order BY y.yymmdd ASC
+
+
+-- 복귀
+SELECT y.yymm, y.yyww, y.yymmdd, '복귀' AS "store_type", price
+FROM "YMD2" AS y
+LEFT JOIN (
+			SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
+			FROM "order_batch"
+			WHERE all_cust_type = '재구매' AND order_date > prev_dead_date
+			AND order_id <> '' AND phytoway = 'y' AND prd_amount_mod <= 500000 AND order_date < '2023-05-24'
+			GROUP BY yymm, yyww, order_date
 			) AS o ON (y.yymmdd = o.order_date)
 WHERE y.yyww > '2023-12'
 Order BY y.yymmdd ASC
