@@ -361,7 +361,7 @@ WHERE job = 'retin' AND crdate > '2023-05-22'
 UNION ALL 
 
 
--- 코린트 출고 (반품 제외하고 주문만)
+-- 창고별 출고 (반품 제외하고 주문만)
 SELECT 	trans_date, "warehouse", SUM(out_qty) AS out_qty, onnuri_code, onnuri_name, '출고' AS "stock_type"
 FROM (
 SELECT 	trans_date, 
@@ -432,33 +432,48 @@ WHERE "warehouse" = '코린트' AND base_date <= '2023-05-23'
 
 
 
-SELECT *
-FROM "coupang_order"
-WHERE "orderId" IN (16000181733725, 12000181364103)
 
 
 
 
-::text IN (
 
 
-SELECT *
-FROM "order_batch"
-WHERE order_id IN (
+
+
+
+-- 창고별 출고 (반품 제외하고 주문만)
+SELECT 	trans_date, "warehouse", SUM(out_qty) AS out_qty, onnuri_code, onnuri_name, '출고' AS "stock_type"
+FROM (
+SELECT 	trans_date, 
+			CASE 
+				WHEN store = '스마트스토어_풀필먼트' THEN '스마트스토어_풀필먼트'
+				WHEN store = '쿠팡_제트배송' THEN '쿠팡_제트배송'
+				ELSE '코린트'
+			END AS "warehouse", 
+			SUM(out_qty) * -1 AS out_qty, onnuri_code, onnuri_name
+FROM 	(
+			SELECT 	*
+			FROM "order_batch" 
+			WHERE onnuri_type = '판매분매입' AND trans_date > '2023-04-22' 
+			AND trans_date <> '' AND trans_date IS NOT NULL AND order_status <> '취소' AND order_status <> '반품' AND nick = '판토모나하이퍼포머'
+			--AND nick = '판토모나하이퍼포머'
+		) AS t
+GROUP BY trans_date, onnuri_code, onnuri_name, store
+) AS t
+WHERE warehouse = '스마트스토어_풀필먼트' 
+GROUP BY trans_date, "warehouse", onnuri_code, onnuri_name
+
+
 
 SELECT order_id
-FROM "EZ_Order"
-WHERE seq IN (
-501052,
-501045,
-501044,
-500836,
-500807)
+FROM "order_batch" 
+WHERE trans_date = '2023-05-24' AND nick = '판토모나하이퍼포머' AND store = '스마트스토어_풀필먼트' AND order_status <> '취소' AND order_status <> '반품'
 
-)
+WHERE order_id = '2023052368517361'
 
+SELECT *
+FROM "order_batch" 
+WHERE order_id = '2023052115565621'
 
-16000181733725
-12000181364103
 
 
