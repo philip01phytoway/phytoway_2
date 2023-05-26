@@ -234,14 +234,18 @@ GROUP BY trans_date, onnuri_code, onnuri_name
 
 
 
-------
-판토모나하이퍼포머만
------
+--------------------------------------------------------------------
+
+-- 재고현황 2차
+
+--------------------------------------------------------------------
 
 SELECT *
 FROM "stock_base"
 
 
+-- 전산오차 조정 필요함. 
+-- null 매핑 해야 함.
 
 
 SELECT *
@@ -261,8 +265,8 @@ SELECT LEFT(crdate, 10) AS in_date, '코린트' as warehouse, s.qty * b.qty AS i
 FROM "stock_log" AS s
 LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
 LEFT JOIN "product" AS p ON (b.product_no = p.no)
-WHERE job = 'in' AND p.nick = '판토모나하이퍼포머' AND crdate > '2023-05-22'
---Order BY crdate desc
+WHERE job = 'in' AND crdate > '2023-05-22'
+
 
 
 UNION ALL 
@@ -294,7 +298,7 @@ FROM (
 		) AS o3
 LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
 WHERE s.no IN (48, 49) AND onnuri_type = '판매분매입' AND trans_date > '2023-05-22'
---AND o3.nick = '판토모나하이퍼포머'
+
 
 
 UNION ALL 
@@ -332,7 +336,7 @@ FROM (
 		) AS o3
 LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
 WHERE s.no IN (48, 49) AND onnuri_type = '판매분매입' AND trans_date > '2023-05-22'
---AND o3.nick = '판토모나하이퍼포머'
+
 
 
 UNION ALL 
@@ -344,7 +348,7 @@ FROM "stock_log" AS s
 LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
 LEFT JOIN "product" AS p ON (b.product_no = p.no)
 WHERE job = 'arrange' AND crdate > '2023-05-22'
---AND p.nick = '판토모나하이퍼포머'
+
 
 
 UNION ALL 
@@ -355,7 +359,6 @@ FROM "stock_log" AS s
 LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
 LEFT JOIN "product" AS p ON (b.product_no = p.no)
 WHERE job = 'retin' AND crdate > '2023-05-22'
---AND p.nick = '판토모나하이퍼포머'
 
 
 UNION ALL 
@@ -376,12 +379,12 @@ FROM 	(
 			FROM "order_batch" 
 			WHERE onnuri_type = '판매분매입' AND trans_date > '2023-05-22' 
 			AND trans_date <> '' AND trans_date IS NOT NULL AND order_status <> '취소' AND order_status <> '반품'
-			--AND nick = '판토모나하이퍼포머'
 		) AS t
 GROUP BY trans_date, onnuri_code, onnuri_name, store
 ) AS t
 GROUP BY trans_date, "warehouse", onnuri_code, onnuri_name
 
+	
 UNION ALL 
 
 
@@ -415,7 +418,6 @@ FROM 	(
 LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
 WHERE s.no = 47 AND onnuri_type = '판매분매입' AND recv_name NOT LIKE '%전현빈%'
 AND trans_date <> '' AND trans_date IS NOT NULL AND trans_date > '2023-05-22' 
---AND nick = '판토모나하이퍼포머'
 GROUP BY trans_date, onnuri_code, onnuri_name
 ) AS t
 GROUP BY trans_date, "warehouse", onnuri_code, onnuri_name

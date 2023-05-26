@@ -83,6 +83,9 @@ WHERE op."option_code" IS NULL
 --AND o."deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
 
 
+
+
+
 -- 6. 네이버 매핑 중복 확인
 
 
@@ -259,6 +262,12 @@ Order BY yymm DESC, price DESC
 -- 광고
 
 ---------------------------------
+
+-- 
+select * from "ad_batch" WHERE channel IS null
+
+
+
 
 -- 광고 데이터 수집 여부는 admin과 sum으로 대조해서 검증을 하자.
 -- 동시에 데이터 정확성도 검증하는 것.

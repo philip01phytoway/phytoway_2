@@ -14,3 +14,15 @@ FROM 	(
 					) AS t1
 		) AS t2
 GROUP BY cohort_group, cohort_index, nick
+
+
+
+SELECT * 
+FROM "Naver_Search_Channel"
+WHERE "D" LIKE '%판토모나%' OR "D" LIKE '%써큐시안%'
+
+
+SELECT *
+FROM "ad_mapping3"
+
+
