@@ -26,3 +26,12 @@ SELECT *
 FROM "ad_mapping3"
 
 
+SELECT *
+FROM "naver_option"
+WHERE option_code = '31861468601'
+
+
+
+SELECT *
+FROM "product"
+Order BY no
