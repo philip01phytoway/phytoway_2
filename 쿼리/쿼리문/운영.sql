@@ -34,4 +34,14 @@ WHERE option_code = '31861468601'
 
 SELECT *
 FROM "product"
-Order BY no
+Order BY NO
+
+
+
+
+select *
+from "EZ_Order"
+where seq = 502705
+
+
+

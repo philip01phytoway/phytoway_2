@@ -102,6 +102,17 @@ WHERE op."option" IS NULL
 
 -- 8. 쿠팡 매핑 중복 확인
 
+-- 9. 쿠팡 제트배송 매핑 누락 확인
+SELECT distinct option_id, option_name
+FROM "coupang_sales" AS s
+LEFT JOIN "coupang_option" AS op ON (s.option_id = op."option")
+WHERE sales_type = '로켓그로스' and op."option" is null
+
+
+select * from "order_batch" where store = '쿠팡_제트배송' and nick = '페미론큐글루타치온'
+
+
+
 
 
 --  1. 일별 매출 합계
