@@ -343,6 +343,46 @@ AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
 UNION ALL 
 
 -- 네이버
+-- 정상주문 & 결합상품
+SELECT 	"ordererName" || "ordererId" AS "key", 
+			"orderId", '주문' as order_status, 
+			
+			LEFT("paymentDate", 10) AS "order_date",
+			LEFT("paymentDate", 10) || ' ' || SUBSTRING("paymentDate", 12, 8) AS "order_date_time",
+			
+			"ordererName", "ordererId", "ordererTel", 	 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			
+			CASE 
+				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
+				ELSE '스마트스토어'
+			END AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			p.brand, p.nick, o.option_qty AS "product_qty", "quantity" AS order_qty, "quantity" * o.option_qty AS "out_qty", 
+			CASE 
+         	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN 1 
+         	ELSE 0 
+       	END AS order_cnt,
+			
+			0 as "totalPaymentAmount", 0 as "expectedSettlementAmount",
+			
+			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type, LEFT("sendDate", 10) AS trans_date
+			
+FROM 		"naver_order_product" AS n
+LEFT JOIN "naver_option_combined" AS o ON (n."optionCode" = o."option_code")
+LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+WHERE 	"productOrderStatus" IN ('PAYED', 'DELIVERING', 'DELIVERED', 'PURCHASE_DECIDED', 'EXCHANGED', 'CANCELED', 'RETURNED') and o."option_code" is not null
+AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")	
+	
+union all 	
+	
+-- 네이버
 -- cs 주문
 
 SELECT 	"ordererName" || "ordererId" AS "key", 
@@ -402,7 +442,67 @@ LEFT JOIN "product" AS p ON (o."product_no" = p."no")
 WHERE 	"productOrderStatus" IN ('EXCHANGED', 'CANCELED', 'RETURNED')	
 AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
 
-
+union all 
+	
+-- 네이버
+-- cs 주문 & 결합상품
+SELECT 	"ordererName" || "ordererId" AS "key", 
+			"orderId", 
+			
+			CASE 
+				WHEN "productOrderStatus" = 'EXCHANGED' THEN '교환'
+				WHEN "productOrderStatus" = 'CANCELED' THEN '취소'
+				WHEN "productOrderStatus" = 'RETURNED' THEN '반품'
+			END AS order_status, 
+			
+			CASE 
+				WHEN "productOrderStatus" = 'EXCHANGED' THEN LEFT("claimRequestDate", 10)
+				WHEN "productOrderStatus" = 'CANCELED' THEN LEFT("cancelCompletedDate", 10)
+				WHEN "productOrderStatus" = 'RETURNED' THEN LEFT("returnCompletedDate", 10)
+			END AS order_date, 
+			
+			CASE 
+				WHEN "productOrderStatus" = 'EXCHANGED' THEN LEFT("claimRequestDate", 10) || ' ' || SUBSTRING("claimRequestDate", 12, 8)
+				WHEN "productOrderStatus" = 'CANCELED' THEN LEFT("cancelCompletedDate", 10) || ' ' || SUBSTRING("cancelCompletedDate", 12, 8)
+				WHEN "productOrderStatus" = 'RETURNED' THEN LEFT("returnCompletedDate", 10) || ' ' || SUBSTRING("returnCompletedDate", 12, 8)
+			END AS order_date_time, 
+			
+			"ordererName", "ordererId", "ordererTel", 	 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			
+			CASE 
+				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
+				ELSE '스마트스토어'
+			END AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			p.brand, p.nick, o.option_qty AS "product_qty", "quantity" AS order_qty, "quantity" * o.option_qty * -1 AS "out_qty", 
+			CASE 
+         	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN -1 
+         	ELSE 0 
+       	END AS order_cnt,
+			
+			"totalPaymentAmount" * -1 AS "totalPaymentAmount", "expectedSettlementAmount" * -1 AS "expectedSettlementAmount",
+			
+			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type, 
+			
+			CASE 
+				WHEN "productOrderStatus" = 'EXCHANGED' THEN LEFT("claimRequestDate", 10)
+				WHEN "productOrderStatus" = 'CANCELED' THEN LEFT("cancelCompletedDate", 10)
+				WHEN "productOrderStatus" = 'RETURNED' THEN LEFT("returnCompletedDate", 10)
+			END AS trans_date
+			
+FROM 		"naver_order_product" AS n
+LEFT JOIN "naver_option_combined" AS o ON (n."optionCode" = o."option_code")
+LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+WHERE 	"productOrderStatus" IN ('EXCHANGED', 'CANCELED', 'RETURNED') and o."option_code" is not null	
+AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")	
+	
 UNION ALL 
 	
 -- 쿠팡
@@ -459,7 +559,7 @@ SELECT
 			
 			pp.term, "confirmDate", '' AS inflow_path, '' AS account,
 			
-			onnuri_code, onnuri_name, onnuri_type, LEFT("inTrasitSTRINGTime", 10) AS trans_date
+			onnuri_code, onnuri_name, onnuri_type, LEFT("invoiceNumberUploadDate", 10) AS trans_date
 			
 FROM "coupang_order" AS o,																
 		json_to_recordset(o."orderItems") as p(																	
@@ -469,7 +569,8 @@ FROM "coupang_order" AS o,
 			"cancelCount" INTEGER,
 			"orderPrice" INTEGER,
 			"discountPrice" INTEGER,
-			"confirmDate" 	CHARACTER varying(255)															
+			"confirmDate" 	CHARACTER varying(255),
+			"invoiceNumberUploadDate" CHARACTER varying(255)
 		)
 LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
 LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
@@ -540,7 +641,7 @@ FROM  (
 						
 						pp.term, "confirmDate", '' AS inflow_path, '' AS account,
 						
-						onnuri_code, onnuri_name, onnuri_type, "inTrasitSTRINGTime" AS trans_date
+						onnuri_code, onnuri_name, onnuri_type, left("invoiceNumberUploadDate", 10) AS trans_date
 						
 			FROM "coupang_order" AS o,																
 					json_to_recordset(o."orderItems") as p(																	
@@ -550,7 +651,8 @@ FROM  (
 						"cancelCount" INTEGER,
 						"orderPrice" INTEGER,
 						"discountPrice" INTEGER,
-						"confirmDate" 	CHARACTER varying(255)															
+						"confirmDate" 	CHARACTER varying(255),
+						"invoiceNumberUploadDate" CHARACTER varying(255)
 					)
 			LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
 			LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
@@ -1002,6 +1104,7 @@ WHERE
 
 UNION ALL 
 
+
 -- 네이버
 -- 정상주문
 SELECT 	"ordererName" || "ordererId" AS "key", 
@@ -1042,6 +1145,46 @@ AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
 
 UNION ALL 
 
+-- 네이버
+-- 정상주문 & 결합상품
+SELECT 	"ordererName" || "ordererId" AS "key", 
+			"orderId", '주문' as order_status, 
+			
+			LEFT("paymentDate", 10) AS "order_date",
+			LEFT("paymentDate", 10) || ' ' || SUBSTRING("paymentDate", 12, 8) AS "order_date_time",
+			
+			"ordererName", "ordererId", "ordererTel", 	 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			
+			CASE 
+				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
+				ELSE '스마트스토어'
+			END AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			p.brand, p.nick, o.option_qty AS "product_qty", "quantity" AS order_qty, "quantity" * o.option_qty AS "out_qty", 
+			CASE 
+         	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN 1 
+         	ELSE 0 
+       	END AS order_cnt,
+			
+			0 as "totalPaymentAmount", 0 as "expectedSettlementAmount",
+			
+			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type, LEFT("sendDate", 10) AS trans_date
+			
+FROM 		"naver_order_product" AS n
+LEFT JOIN "naver_option_combined" AS o ON (n."optionCode" = o."option_code")
+LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+WHERE 	"productOrderStatus" IN ('PAYED', 'DELIVERING', 'DELIVERED', 'PURCHASE_DECIDED', 'EXCHANGED', 'CANCELED', 'RETURNED') and o."option_code" is not null
+AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")	
+	
+union all 	
+	
 -- 네이버
 -- cs 주문
 
@@ -1102,6 +1245,67 @@ LEFT JOIN "product" AS p ON (o."product_no" = p."no")
 WHERE 	"productOrderStatus" IN ('EXCHANGED', 'CANCELED', 'RETURNED')	
 AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
 
+union all 
+	
+-- 네이버
+-- cs 주문 & 결합상품
+SELECT 	"ordererName" || "ordererId" AS "key", 
+			"orderId", 
+			
+			CASE 
+				WHEN "productOrderStatus" = 'EXCHANGED' THEN '교환'
+				WHEN "productOrderStatus" = 'CANCELED' THEN '취소'
+				WHEN "productOrderStatus" = 'RETURNED' THEN '반품'
+			END AS order_status, 
+			
+			CASE 
+				WHEN "productOrderStatus" = 'EXCHANGED' THEN LEFT("claimRequestDate", 10)
+				WHEN "productOrderStatus" = 'CANCELED' THEN LEFT("cancelCompletedDate", 10)
+				WHEN "productOrderStatus" = 'RETURNED' THEN LEFT("returnCompletedDate", 10)
+			END AS order_date, 
+			
+			CASE 
+				WHEN "productOrderStatus" = 'EXCHANGED' THEN LEFT("claimRequestDate", 10) || ' ' || SUBSTRING("claimRequestDate", 12, 8)
+				WHEN "productOrderStatus" = 'CANCELED' THEN LEFT("cancelCompletedDate", 10) || ' ' || SUBSTRING("cancelCompletedDate", 12, 8)
+				WHEN "productOrderStatus" = 'RETURNED' THEN LEFT("returnCompletedDate", 10) || ' ' || SUBSTRING("returnCompletedDate", 12, 8)
+			END AS order_date_time, 
+			
+			"ordererName", "ordererId", "ordererTel", 	 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			
+			CASE 
+				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
+				ELSE '스마트스토어'
+			END AS store,
+			
+			CASE 
+				WHEN brand = '기타' THEN 'n'
+				ELSE 'y'
+			END AS phytoway,
+			p.brand, p.nick, o.option_qty AS "product_qty", "quantity" AS order_qty, "quantity" * o.option_qty * -1 AS "out_qty", 
+			CASE 
+         	WHEN ROW_NUMBER() OVER (PARTITION BY "orderId" ORDER BY "orderId") = 1 THEN -1 
+         	ELSE 0 
+       	END AS order_cnt,
+			
+			"totalPaymentAmount" * -1 AS "totalPaymentAmount", "expectedSettlementAmount" * -1 AS "expectedSettlementAmount",
+			
+			p.term, "decisionDate", n."inflowPath" AS inflow_path, '' AS account,
+			
+			onnuri_code, onnuri_name, onnuri_type, 
+			
+			CASE 
+				WHEN "productOrderStatus" = 'EXCHANGED' THEN LEFT("claimRequestDate", 10)
+				WHEN "productOrderStatus" = 'CANCELED' THEN LEFT("cancelCompletedDate", 10)
+				WHEN "productOrderStatus" = 'RETURNED' THEN LEFT("returnCompletedDate", 10)
+			END AS trans_date
+			
+FROM 		"naver_order_product" AS n
+LEFT JOIN "naver_option_combined" AS o ON (n."optionCode" = o."option_code")
+LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+WHERE 	"productOrderStatus" IN ('EXCHANGED', 'CANCELED', 'RETURNED') and o."option_code" is not null	
+AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")		
+
 
 UNION ALL 
 	
@@ -1159,7 +1363,7 @@ SELECT
 			
 			pp.term, "confirmDate", '' AS inflow_path, '' AS account,
 			
-			onnuri_code, onnuri_name, onnuri_type, LEFT("inTrasitSTRINGTime", 10) AS trans_date
+			onnuri_code, onnuri_name, onnuri_type, LEFT("invoiceNumberUploadDate", 10) AS trans_date
 			
 FROM "coupang_order" AS o,																
 		json_to_recordset(o."orderItems") as p(																	
@@ -1169,7 +1373,8 @@ FROM "coupang_order" AS o,
 			"cancelCount" INTEGER,
 			"orderPrice" INTEGER,
 			"discountPrice" INTEGER,
-			"confirmDate" 	CHARACTER varying(255)															
+			"confirmDate" 	CHARACTER varying(255),
+			"invoiceNumberUploadDate" CHARACTER varying(255)
 		)
 LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
 LEFT JOIN "product" AS pp ON (op.product_no = pp.no)
@@ -1240,7 +1445,7 @@ FROM  (
 						
 						pp.term, "confirmDate", '' AS inflow_path, '' AS account,
 						
-						onnuri_code, onnuri_name, onnuri_type, "inTrasitSTRINGTime" AS trans_date
+						onnuri_code, onnuri_name, onnuri_type, left("invoiceNumberUploadDate", 10) AS trans_date
 						
 			FROM "coupang_order" AS o,																
 					json_to_recordset(o."orderItems") as p(																	
@@ -1250,7 +1455,8 @@ FROM  (
 						"cancelCount" INTEGER,
 						"orderPrice" INTEGER,
 						"discountPrice" INTEGER,
-						"confirmDate" 	CHARACTER varying(255)															
+						"confirmDate" 	CHARACTER varying(255),
+						"invoiceNumberUploadDate" CHARACTER varying(255)
 					)
 			LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
 			LEFT JOIN "product" AS pp ON (op.product_no = pp.no)

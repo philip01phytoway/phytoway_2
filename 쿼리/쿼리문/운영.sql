@@ -45,3 +45,8 @@ where seq = 502705
 
 
 
+SELECT *
+FROM "naver_option"
+WHERE option_code = '32006841737'
+
+

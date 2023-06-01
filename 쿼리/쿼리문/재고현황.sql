@@ -278,10 +278,10 @@ FROM 	(
 
 						UNION ALL 
 
-						-- 코린트 --> 풀필먼트, 제트배송 재고이동 | 코린트에서 출고한 관점
+						-- 코린트 --> 풀필먼트, 제트배송 창고이동 | 코린트에서 출고한 관점
 						-- 판매처
 						SELECT order_date, '코린트' AS warehouse,
-									out_qty * -1 AS out_qty, o3.onnuri_code, o3.onnuri_name, '재고이동' AS stock_type
+									out_qty * -1 AS out_qty, o3.onnuri_code, o3.onnuri_name, '창고이동' AS stock_type
 						FROM (
 									SELECT	
 												left(order_date, 10) AS order_date, o2.shop_id, o2.nick,
@@ -319,7 +319,7 @@ FROM 	(
 										WHEN s.no = 48 THEN '쿠팡_제트배송'
 										WHEN s.no = 49 THEN '스마트스토어_풀필먼트'
 									END AS warehouse,
-									out_qty, o3.onnuri_code, o3.onnuri_name, '재고이동' AS stock_type
+									out_qty, o3.onnuri_code, o3.onnuri_name, '입고' AS stock_type
 						FROM (
 									SELECT	
 												left(order_date, 10) AS order_date, o2.shop_id, o2.nick,
@@ -452,64 +452,90 @@ order by base_date desc, warehouse, onnuri_name, stock_type
 
 
 
--- 제트배송 매출 확인
-
-select nick, sum(prd_amount_mod)
-from "order_batch" 
-where store = '쿠팡_제트배송' and order_date = '2023-05-30'
-group by nick
-
-
-select *
-from "product"
-order by no
 
 
 
-select p.nick, sum(net_sales_price)
-FROM "coupang_sales" AS s
-LEFT JOIN "coupang_option" AS op ON (s.option_id = op."option")
-LEFT JOIN "product" AS p ON (op.product_no = p.no)
-WHERE sales_type = '로켓그로스' and s.reg_date = '2023-05-30'
-group by p.nick
+
+select distinct store from out_view
 
 
-select *
-FROM "coupang_sales"
-where reg_date = '2023-05-30'
 
 
-select store, sum(out_qty)
-from "order_batch" 
-where trans_date = '2023-05-30' and nick = '판토모나하이퍼포머'
+
+select trans_date, sum(out_qty)
+from out_view
+where store not in ('스마트스토어_풀필먼트') AND nick = '판토모나하이퍼포머' and order_status = '주문'  --and trans_date = '2023-05-26'
+group by trans_date
+
+
+select store, sum(out_qty) --seq, store, out_qty
+from out_view
+where store not in ('스마트스토어_풀필먼트') AND nick = '판토모나하이퍼포머' and trans_date = '2023-05-24'
 group by store
 
 
-select *
-from "coupang_order"
-where "orderId"::text in (
 
-select order_id
+select seq, store, out_qty
+from out_view
+where store not in ('스마트스토어_풀필먼트') AND nick = '판토모나하이퍼포머' and trans_date = '2023-05-24'
+
+
+
+
+
+select *
 from "EZ_Order"
 where seq in (
-502703,
-502169,
-502168,
-502161,
-502129,
-502049,
-502038,
-502023,
-502014,
-502012,
-502008,
-501974,
-502156,
-502089,
-502007,
-502146,
-502080,
-502030
+501321,
+501323,
+501322
 )
 
+
+
+select *
+from "out_view"
+--where store = '추가발송'
+
+where seq in (
+501321,
+501323,
+501322
 )
+
+
+
+
+						
+						
+-- 코린트 창고이동						
+select order_date, '코린트' AS warehouse, out_qty, onnuri_code, onnuri_name, '창고이동' AS stock_type
+from "out_view"
+where order_status = '주문' and store in ('B2B_풀필먼트_창고이동', 'B2B_제트배송_창고이동') and onnuri_type = '판매분매입' and order_date > '2023-05-25'
+
+union all 
+
+-- 풀필먼트, 제트배송 입고
+select order_date, store AS warehouse, out_qty, onnuri_code, onnuri_name, '입고' AS stock_type
+from "out_view"
+where store in ('B2B_풀필먼트_창고이동', 'B2B_제트배송_창고이동') and onnuri_type = '판매분매입' and order_date > '2023-05-25'
+
+union all 
+
+-- 판매 (추가발송 포함)
+select trans_date, "warehouse", SUM(out_qty) AS out_qty, onnuri_code, onnuri_name, '판매' AS "stock_type"
+from (
+		select trans_date, 
+				CASE 
+					WHEN store = '스마트스토어_풀필먼트' THEN '스마트스토어_풀필먼트'
+					WHEN store = '쿠팡_제트배송' THEN '쿠팡_제트배송'
+					ELSE '코린트'
+				END AS "warehouse",  
+				out_qty, onnuri_code, onnuri_name
+		from "out_view"
+		where order_status = '주문' and onnuri_type = '판매분매입' and trans_date > '2023-05-25'
+	) as t
+GROUP BY trans_date, "warehouse", onnuri_code, onnuri_name
+
+
+select * from "out_view" where store = '쿠팡_제트배송'

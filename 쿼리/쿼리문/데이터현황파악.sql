@@ -1,5 +1,33 @@
 -- 데이터 현황파악
 
+
+---------------------------------
+
+-- 배치 테이블 업데이트
+
+---------------------------------
+
+-- order_batch
+DELETE FROM "order_batch"
+
+INSERT INTO "order_batch" (yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type, inflow_path, dead_date, onnuri_code, onnuri_name, onnuri_type, trans_date, prev_dead_date, next_dead_date, prev_order_date, next_order_date)
+SELECT yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type, inflow_path, dead_date, onnuri_code, onnuri_name, onnuri_type, trans_date, prev_dead_date, next_dead_date, prev_order_date, next_order_date FROM "order5"
+
+
+-- ad_batch
+DELETE FROM "ad_batch"
+
+INSERT INTO "ad_batch" (yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id)
+SELECT yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id FROM "ad_view7"
+
+
+-- content_batch
+DELETE FROM "content_batch"
+
+INSERT INTO "content_batch" (yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price)
+SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price FROM "content_view3"
+
+
 ---------------------------------
 
 -- 주문
@@ -87,6 +115,12 @@ WHERE op."option_code" IS NULL
 
 
 -- 6. 네이버 매핑 중복 확인
+select "option_code", count(*)
+from "naver_option" as n
+group by "option_code"
+having count(*) > 1
+
+
 
 
 -- 7. 쿠팡 매핑 누락 확인
