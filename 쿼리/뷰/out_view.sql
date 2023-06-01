@@ -96,7 +96,7 @@ FROM 	(
 					) AS o2
 		) AS o3
 LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
-WHERE s.no NOT IN (45, 12, 25)
+WHERE s.no NOT IN (45, 25)
 		
 
 		
@@ -214,7 +214,7 @@ FROM 	(
 					) AS o2
 		) AS o3
 LEFT JOIN "store" AS s ON (o3.shop_id = s.ez_store_code)
-WHERE s.no NOT IN (45, 12, 25)
+WHERE s.no NOT IN (45, 25)
 		
 
 union all 
@@ -259,6 +259,7 @@ LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
 WHERE 	"productOrderStatus" IN ('PAYED', 'DELIVERING', 'DELIVERED', 'PURCHASE_DECIDED', 'EXCHANGED', 'CANCELED', 'RETURNED')	
 AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
+AND "deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
 
 UNION ALL 
 
@@ -301,6 +302,7 @@ LEFT JOIN "naver_option_combined" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
 WHERE 	"productOrderStatus" IN ('PAYED', 'DELIVERING', 'DELIVERED', 'PURCHASE_DECIDED', 'EXCHANGED', 'CANCELED', 'RETURNED') and o."option_code" is not null
 AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")	
+AND "deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
 	
 union all 	
 	
@@ -365,6 +367,7 @@ LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
 WHERE 	"productOrderStatus" IN ('EXCHANGED', 'CANCELED', 'RETURNED')	
 AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
+AND "deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
 
 union all 
 	
@@ -428,7 +431,7 @@ LEFT JOIN "naver_option_combined" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
 WHERE 	"productOrderStatus" IN ('EXCHANGED', 'CANCELED', 'RETURNED') and o."option_code" is not null	
 AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")	
-
+AND "deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
 
 union all 
 

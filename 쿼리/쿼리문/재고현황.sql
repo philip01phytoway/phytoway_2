@@ -505,37 +505,112 @@ where seq in (
 
 
 
+--------------------------------------------------------------------
 
+-- 재고현황 3차
+
+--------------------------------------------------------------------
+SELECT 	base_date, "warehouse", onnuri_code, onnuri_name, stock_type,
+			lag(stock_qty, 1) over(partition BY "warehouse", onnuri_name, stock_type Order BY base_date ASC) AS base_qty,
+			CASE  
+				when flow_qty < 0 THEN flow_qty * -1 
+				ELSE flow_qty
+			END AS flow_qty, 
+			stock_qty, avg_out_qty, 
+			CASE 
+				WHEN avg_out_qty <> 0 OR avg_out_qty IS NULL THEN (stock_qty / avg_out_qty)::integer
+				ELSE NULL
+			END AS shortage_period
+FROM 	(			
+			
+			
+			SELECT 	*,
+								SUM(flow_qty) over(partition BY "warehouse", onnuri_name Order BY base_date ASC) AS stock_qty,
+								AVG(CASE WHEN stock_type = '판매' THEN flow_qty ELSE NULL END) OVER (PARTITION BY "warehouse", onnuri_name, stock_type ORDER BY base_date ROWS BETWEEN 29 PRECEDING AND CURRENT ROW)::INTEGER * -1 AS avg_out_qty
+			FROM 	(		
+					
+					
+						SELECT base_date, "warehouse", onnuri_code, onnuri_name, "stock_type", SUM(qty) AS flow_qty		
+						FROM (
 						
 						
--- 코린트 창고이동						
-select order_date, '코린트' AS warehouse, out_qty, onnuri_code, onnuri_name, '창고이동' AS stock_type
-from "out_view"
-where order_status = '주문' and store in ('B2B_풀필먼트_창고이동', 'B2B_제트배송_창고이동') and onnuri_type = '판매분매입' and order_date > '2023-05-25'
+									-- 코린트 기준 재고 (2023-05-25)
+									SELECT base_date, w.name AS warehouse, s.qty, p.onnuri_code, p.onnuri_name, '기준재고' AS "stock_type"
+									FROM "stock_base" AS s
+									LEFT JOIN "warehouse" AS w ON (s.warehouse_no = w.no)
+									LEFT JOIN "product" AS p ON (s.product_no = p.no)
+									
+									UNION ALL 
+									
+									-- 코린트 입고, 조정, 반품입고, 출고(판매로 표기했음)
+									SELECT 	LEFT(crdate, 10) AS out_date, '코린트' AS warehouse, 
+												CASE 
+													WHEN job = 'out' THEN s.qty * b.qty * -1
+													ELSE s.qty * b.qty 
+													END AS arrange_qty, 
+													p.onnuri_code, p.onnuri_name, 
+												CASE 
+													WHEN job = 'in' THEN '입고'
+													WHEN job = 'arrange' THEN '조정'
+													WHEN job = 'retin' THEN '반품입고'
+													WHEN job = 'out' THEN '판매'
+												END AS stock_type
+									FROM "stock_log" AS s
+									LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
+									LEFT JOIN "product" AS p ON (b.product_no = p.no)
+									WHERE job IN ('in', 'arrange', 'retin', 'out') AND crdate > '2023-05-25'
+									
+									UNION ALL 		
+															
+									-- 코린트 창고이동						
+									select order_date, '코린트' AS warehouse, out_qty * -1 AS out_qty, onnuri_code, onnuri_name, '창고이동' AS stock_type
+									from "out_view"
+									where order_status = '주문' and store in ('B2B_풀필먼트_창고이동', 'B2B_제트배송_창고이동') and onnuri_type = '판매분매입' and order_date > '2023-05-25'
+									
+									union all 
+									
+									-- 풀필먼트, 제트배송 입고
+									select order_date, store AS warehouse, out_qty, onnuri_code, onnuri_name, '입고' AS stock_type
+									from "out_view"
+									where store in ('B2B_풀필먼트_창고이동', 'B2B_제트배송_창고이동') and onnuri_type = '판매분매입' and order_date > '2023-05-25'
+									
+									union all 
+									
+									-- 판매 (추가발송 포함)
+									select trans_date, "warehouse", SUM(out_qty) * -1 AS out_qty, onnuri_code, onnuri_name, '판매' AS "stock_type"
+									from (
+											select trans_date, 
+													CASE 
+														WHEN store = '스마트스토어_풀필먼트' THEN '스마트스토어_풀필먼트'
+														WHEN store = '쿠팡_제트배송' THEN '쿠팡_제트배송'
+														ELSE '코린트'
+													END AS "warehouse",  
+													out_qty, onnuri_code, onnuri_name
+											from "out_view"
+											where order_status = '주문' AND store NOT in ('B2B_풀필먼트_창고이동', 'B2B_제트배송_창고이동') AND onnuri_type = '판매분매입' and trans_date > '2023-05-25'
+										) as t
+									GROUP BY trans_date, "warehouse", onnuri_code, onnuri_name
+									
+									UNION ALL 
+									
+									-- DB에서 조정
+									SELECT adj_date, w.name AS warehouse, s.qty, p.onnuri_code, p.onnuri_name, "stock_type"
+									FROM "stock_adj" AS s
+									LEFT JOIN "warehouse" AS w ON (s.warehouse_no = w.no)
+									LEFT JOIN "product" AS p ON (s.product_no = p.no)
+						
+						
+							) AS t1
+						WHERE base_date < current_date::varchar 
+						group by base_date, "warehouse", onnuri_code, onnuri_name, "stock_type"
+						
+						
+				) AS t2
+				
+				
+		) as t3
+order by base_date desc, warehouse, onnuri_name, stock_type
 
-union all 
-
--- 풀필먼트, 제트배송 입고
-select order_date, store AS warehouse, out_qty, onnuri_code, onnuri_name, '입고' AS stock_type
-from "out_view"
-where store in ('B2B_풀필먼트_창고이동', 'B2B_제트배송_창고이동') and onnuri_type = '판매분매입' and order_date > '2023-05-25'
-
-union all 
-
--- 판매 (추가발송 포함)
-select trans_date, "warehouse", SUM(out_qty) AS out_qty, onnuri_code, onnuri_name, '판매' AS "stock_type"
-from (
-		select trans_date, 
-				CASE 
-					WHEN store = '스마트스토어_풀필먼트' THEN '스마트스토어_풀필먼트'
-					WHEN store = '쿠팡_제트배송' THEN '쿠팡_제트배송'
-					ELSE '코린트'
-				END AS "warehouse",  
-				out_qty, onnuri_code, onnuri_name
-		from "out_view"
-		where order_status = '주문' and onnuri_type = '판매분매입' and trans_date > '2023-05-25'
-	) as t
-GROUP BY trans_date, "warehouse", onnuri_code, onnuri_name
 
 
-select * from "out_view" where store = '쿠팡_제트배송'
+
