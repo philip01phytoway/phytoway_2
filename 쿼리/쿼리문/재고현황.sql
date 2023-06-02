@@ -558,7 +558,7 @@ FROM 	(
 									FROM "stock_log" AS s
 									LEFT JOIN "bundle" AS b ON (s.product_id = b.ez_code)
 									LEFT JOIN "product" AS p ON (b.product_no = p.no)
-									WHERE job IN ('in', 'arrange', 'retin', 'out') AND crdate > '2023-05-25'
+									WHERE job IN ('in', 'arrange', 'retin', 'out') and onnuri_type = '판매분매입'  AND crdate > '2023-05-25'
 									
 									UNION ALL 		
 															
@@ -570,7 +570,12 @@ FROM 	(
 									union all 
 									
 									-- 풀필먼트, 제트배송 입고
-									select order_date, store AS warehouse, out_qty, onnuri_code, onnuri_name, '입고' AS stock_type
+									select 	order_date, 
+											case
+												when store = 'B2B_풀필먼트_창고이동' then '스마트스토어_풀필먼트'
+												when store = 'B2B_제트배송_창고이동' then '쿠팡_제트배송'
+											end as warehouse, 
+											out_qty, onnuri_code, onnuri_name, '입고' AS stock_type
 									from "out_view"
 									where store in ('B2B_풀필먼트_창고이동', 'B2B_제트배송_창고이동') and onnuri_type = '판매분매입' and order_date > '2023-05-25'
 									
@@ -610,7 +615,6 @@ FROM 	(
 				
 		) as t3
 order by base_date desc, warehouse, onnuri_name, stock_type
-
 
 
 
