@@ -309,7 +309,9 @@ Order BY yymm DESC, price DESC
 ---------------------------------
 
 -- 
-select * from "ad_batch" WHERE channel IS null
+select * from "ad_batch" WHERE yymmdd = '2023-06-01'
+
+channel IS null
 
 
 
