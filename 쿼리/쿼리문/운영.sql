@@ -30,7 +30,7 @@ SELECT *
 FROM "naver_option"
 WHERE option_code = '31861468601'
 
-
+SELECT * FROM "stock_log"
 
 SELECT *
 FROM "product"

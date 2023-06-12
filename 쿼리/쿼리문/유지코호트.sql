@@ -16,12 +16,30 @@ from 	(
 														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
 												'1 month'::interval
 											)::date AS month
-									from	"order" as o left join
-											"order_option" as oo on (o.no = oo.order_no) left join
-											"option_product" as op on (oo.option_code = op.option_code) left join
-											"product" as p on (op.product_no = p.no)
-									where	p.category <> '기타'
-									order by 1,2
+									from	"order" as o 
+									LEFT JOIN "order_option" as oo on (o.no = oo.order_no) 
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.category <> '기타' 
+									AND o.no not in (select order_no from "non_order")
+									AND o.no NOT IN (SELECT no FROM "order" WHERE order_type IN ('취소', '반품'))
+									--order by 1,2
+									
+									UNION ALL 
+									
+									SELECT 	customer_key AS key,
+												generate_series(
+												DATE_TRUNC('month', oo.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									FROM "order_option2" AS oo
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.category <> '기타' 
+									AND oo.no not in (select order_no from "non_order")
+									
 								) as t
 			) as t
 ) as t
@@ -31,54 +49,400 @@ order by 1,2
 
 
 
-select * 
-from "order" as o
-left join "order_option" as oo on (o.no = oo.order_no)
 
 
-select *
-from "order_option"
+-- 1. (상품 : 전체, 스토어 : 전체)
+select	start_mm, mm, '전체' as product, '전체' as store, count(*)
+from 	(
+			select	distinct key, start_mm, mm
+			from	(
+						select	KEY, 
+								to_char(first_value (month) over (partition by key order by month asc), 'yyyy-mm') as start_mm,
+								to_char(month, 'yyyy-mm') as mm
+						from	(
+									select	o.customer_key as KEY, o.store, p.nick,
+											generate_series(
+												DATE_TRUNC('month', o.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									from	"order" as o 
+									LEFT JOIN "order_option" as oo on (o.no = oo.order_no) 
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND o.no not in (select order_no from "non_order")
+									AND o.no NOT IN (SELECT no FROM "order" WHERE order_type IN ('취소', '반품'))
+									--order by 1,2
+									
+									UNION ALL 
+									
+									SELECT 	customer_key AS KEY, oo.store, p.nick,
+												generate_series(
+												DATE_TRUNC('month', oo.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									FROM "order_option2" AS oo
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND oo.no not in (select order_no from "non_order")
+									
+								) as t
+			) as t
+) as t
+group by 1,2
+order by 1,2
 
 
 
 
-SELECT 	"ordererName" || "ordererId" AS "key", 
-			"orderId", 
-			
-			CASE 
-				WHEN "productOrderStatus" = 'EXCHANGED' THEN '교환'
-				WHEN "productOrderStatus" = 'CANCELED' THEN '취소'
-				WHEN "productOrderStatus" = 'RETURNED' THEN '반품'
-			END AS order_status, 
-			
-			CASE 
-				WHEN "productOrderStatus" = 'EXCHANGED' THEN LEFT("claimRequestDate", 10)
-				WHEN "productOrderStatus" = 'CANCELED' THEN LEFT("cancelCompletedDate", 10)
-				WHEN "productOrderStatus" = 'RETURNED' THEN LEFT("returnCompletedDate", 10)
-			END AS order_date
-			
-			
-FROM 		"naver_order_product" AS n
-LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
-LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
-WHERE 	"productOrderStatus" IN ('EXCHANGED', 'CANCELED', 'RETURNED')	
-AND n."orderId" NOT IN (SELECT order_num FROM "Non_Order")
+-- 2. (상품 : 상품별, 스토어 : 전체)
+select	start_mm, mm, nick, '전체' as store, count(*)
+from 	(
+			select	distinct key, start_mm, nick, mm
+			from	(
+						select	KEY, 
+								to_char(first_value (month) over (partition by KEY, nick order by month asc), 'yyyy-mm') as start_mm,
+								nick,
+								to_char(month, 'yyyy-mm') as mm
+						from	(
+									select	o.customer_key as KEY, 
+												
+												CASE  
+													WHEN o.store IN ('스마트스토어', '자사몰') THEN o.store
+													ELSE '기타'
+												END AS store_mod, 
+												p.nick,
+											generate_series(
+												DATE_TRUNC('month', o.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									from	"order" as o 
+									LEFT JOIN "order_option" as oo on (o.no = oo.order_no) 
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND o.no not in (select order_no from "non_order")
+									AND o.no NOT IN (SELECT no FROM "order" WHERE order_type IN ('취소', '반품'))
+									--order by 1,2
+									
+									UNION ALL 
+									
+									SELECT 	customer_key AS KEY, oo.store, p.nick,
+												generate_series(
+												DATE_TRUNC('month', oo.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									FROM "order_option2" AS oo
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND oo.no not in (select order_no from "non_order")
+									
+								) as t
+			) as t
+) as t
+group by 1,2,3
+order by 1,2,3
+
+
+
+-- 3. (상품 : 전체, 스토어 : 스토어별)
+select	start_mm, mm, '전체' as nick, store_mod, count(*)
+from 	(
+			select	distinct key, start_mm, store_mod, mm
+			from	(
+						select	KEY, 
+								to_char(first_value (month) over (partition by KEY, store_mod order by month asc), 'yyyy-mm') as start_mm,
+								store_mod,
+								to_char(month, 'yyyy-mm') as mm
+						from	(
+									select	o.customer_key as KEY, 
+												
+												CASE  
+													WHEN o.store IN ('스마트스토어', '자사몰') THEN o.store
+													ELSE '기타'
+												END AS store_mod, 
+												p.nick,
+											generate_series(
+												DATE_TRUNC('month', o.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									from	"order" as o 
+									LEFT JOIN "order_option" as oo on (o.no = oo.order_no) 
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND o.no not in (select order_no from "non_order")
+									AND o.no NOT IN (SELECT no FROM "order" WHERE order_type IN ('취소', '반품'))
+									--order by 1,2
+									
+									UNION ALL 
+									
+									SELECT 	customer_key AS KEY, oo.store, p.nick,
+												generate_series(
+												DATE_TRUNC('month', oo.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									FROM "order_option2" AS oo
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND oo.no not in (select order_no from "non_order")
+									
+								) as t
+			) as t
+) as t
+group by start_mm, mm, store_mod
+order by start_mm, mm, store_mod
+
+
+
+
+-- 4. (상품 : 상품별, 스토어 : 스토어별)
+select	start_mm, mm, nick, store_mod, count(*)
+from 	(
+			select	distinct key, start_mm, nick, store_mod, mm
+			from	(
+						select	KEY, 
+								to_char(first_value (month) over (partition by KEY, nick, store_mod order by month asc), 'yyyy-mm') as start_mm,
+								nick, store_mod,
+								to_char(month, 'yyyy-mm') as mm
+						from	(
+									select	o.customer_key as KEY, 
+												
+												CASE  
+													WHEN o.store IN ('스마트스토어', '자사몰') THEN o.store
+													ELSE '기타'
+												END AS store_mod, 
+												p.nick,
+											generate_series(
+												DATE_TRUNC('month', o.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									from	"order" as o 
+									LEFT JOIN "order_option" as oo on (o.no = oo.order_no) 
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND o.no not in (select order_no from "non_order")
+									AND o.no NOT IN (SELECT no FROM "order" WHERE order_type IN ('취소', '반품'))
+									--order by 1,2
+									
+									UNION ALL 
+									
+									SELECT 	customer_key AS KEY, oo.store, p.nick,
+												generate_series(
+												DATE_TRUNC('month', oo.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									FROM "order_option2" AS oo
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND oo.no not in (select order_no from "non_order")
+									
+								) as t
+			) as t
+) as t
+group by start_mm, mm, nick, store_mod
+order by start_mm, mm, nick, store_mod
+
+
+
+
+
+-- 5. (상품 : 브랜드별, 스토어 : 전체)
+select	start_mm, mm, brand, '전체' as store_mod, count(*)
+from 	(
+			select	distinct key, start_mm, brand, mm
+			from	(
+						select	KEY, 
+								to_char(first_value (month) over (partition by KEY, brand order by month asc), 'yyyy-mm') as start_mm,
+								brand,
+								to_char(month, 'yyyy-mm') as mm
+						from	(
+									select	o.customer_key as KEY, 
+												
+												CASE  
+													WHEN o.store IN ('스마트스토어', '자사몰') THEN o.store
+													ELSE '기타'
+												END AS store_mod, 
+												p.brand,
+											generate_series(
+												DATE_TRUNC('month', o.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									from	"order" as o 
+									LEFT JOIN "order_option" as oo on (o.no = oo.order_no) 
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND o.no not in (select order_no from "non_order")
+									AND o.no NOT IN (SELECT no FROM "order" WHERE order_type IN ('취소', '반품'))
+									--order by 1,2
+									
+									UNION ALL 
+									
+									SELECT 	customer_key AS KEY, oo.store, p.brand,
+												generate_series(
+												DATE_TRUNC('month', oo.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									FROM "order_option2" AS oo
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND oo.no not in (select order_no from "non_order")
+									
+								) as t
+			) as t
+			WHERE brand IN ('판토모나', '페미론큐')
+) as t
+group by start_mm, mm, brand
+order by start_mm, mm, brand
+
+
+
+
+-- 6. (상품 : 브랜드별, 스토어 : 스토어별)
+select	start_mm, mm, brand, store_mod, count(*)
+from 	(
+			select	distinct key, start_mm, brand, store_mod, mm
+			from	(
+						select	KEY, 
+								to_char(first_value (month) over (partition by KEY, brand, store_mod order by month asc), 'yyyy-mm') as start_mm,
+								brand, store_mod,
+								to_char(month, 'yyyy-mm') as mm
+						from	(
+									select	o.customer_key as KEY, 
+												
+												CASE  
+													WHEN o.store IN ('스마트스토어', '자사몰') THEN o.store
+													ELSE '기타'
+												END AS store_mod, 
+												p.brand,
+											generate_series(
+												DATE_TRUNC('month', o.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									from	"order" as o 
+									LEFT JOIN "order_option" as oo on (o.no = oo.order_no) 
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND o.no not in (select order_no from "non_order")
+									AND o.no NOT IN (SELECT no FROM "order" WHERE order_type IN ('취소', '반품'))
+									--order by 1,2
+									
+									UNION ALL 
+									
+									SELECT 	customer_key AS KEY, oo.store, p.brand,
+												generate_series(
+												DATE_TRUNC('month', oo.order_datetime),
+												case when oo.qty * op.bundle_qty * term * 1.2 > 365 then order_datetime + interval '1 day' * 365 else
+														order_datetime + interval '1 day' * oo.qty * op.bundle_qty * term * 1.2 end,
+												'1 month'::interval
+											)::date AS month
+									FROM "order_option2" AS oo
+									LEFT JOIN "option_product" as op on (oo.option_code = op.option_code) 
+									LEFT JOIN "product" as p on (op.product_no = p.no)
+									where	p.brand <> '기타' 
+									AND oo.no not in (select order_no from "non_order")
+									
+								) as t
+			) as t
+			WHERE brand IN ('판토모나', '페미론큐')
+) as t
+group by start_mm, mm, brand, store_mod
+order by start_mm, mm, brand, store_mod
+
+
+
+
+SELECT * FROM "product"
+
+
+
+SELECT * 
+FROM "option_product"
+
+
+SELECT * FROM "customer" LIMIT 100
+
+
+SELECT COUNT(DISTINCT "orderId") FROM "coupang_order" LIMIT 100
+
+
+
+
+SELECT * FROM "ez_order"
+
+
+SELECT * FROM "order_option"
+
+
+
+SELECT * FROM "order" LIMIT 100
+
+
+
+SELECT * FROM "order2"
+
+
+
+
+SELECT * FROM "order_option" LIMIT 100
+
+
+SELECT * FROM "order_option2" LIMIT 100 
 
 
 
 
 
 
-
-
-select * from "order"
-where no in 
-(select order_no from "non_order")
+SELECT * FROM "ez_order" WHERE seq = 492586
 
 
 
-select distinct order_no
-from "non_order"
-where store = '네이버'
+SELECT * FROM "option_product"
+
+
+SELECT * FROM "order_option"
+
+
+INSERT INTO "option_product"
+SELECT ez_code, product_no, qty 
+FROM "bundle"
+
+
+SELECT * FROM "store"
+
+SELECT * FROM "order"
+
+
 
 
