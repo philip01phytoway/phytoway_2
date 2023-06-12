@@ -40,6 +40,9 @@ SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_k
 -- 주요 데이터 파악
 
 
+SELECT * FROM "ad_batch" WHERE yymmdd = '2023-06-08'
+
+
 -- 1. 이지어드민 주문수집 여부 확인
 SELECT order_date, *
 FROM "EZ_Order"
@@ -67,7 +70,7 @@ LIMIT 10000
 
 -- 4. 이지어드민 매핑 누락 확인 (스토어)
 -- B2B_제트배송은 판매가 아니라 재고이동이다.
-SELECT DISTINCT shop_name
+SELECT DISTINCT shop_name, shop_id
 FROM	"EZ_Order" as o
 LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 WHERE s.ez_store_code IS NULL
@@ -145,7 +148,7 @@ WHERE sales_type = '로켓그로스' and op."option" is null
 
 select * from "order_batch" where store = '쿠팡_제트배송' and nick = '페미론큐글루타치온'
 
-
+select * from "coupang_sales" where "option_id" in ('86226494116', '86226494125')
 
 
 

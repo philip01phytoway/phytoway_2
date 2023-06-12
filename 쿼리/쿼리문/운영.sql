@@ -50,3 +50,34 @@ FROM "naver_option"
 WHERE option_code = '32006841737'
 
 
+SELECT * FROM "cost_marketing"
+
+SELECT * FROM "cost_product"
+
+
+
+
+
+
+
+
+SELECT SUM(cost1), SUM(cost2) FROM "content_batch"
+WHERE yyww IN( '2023-22','2023-23','2023-24') AND page_type = '블로그'
+
+
+SELECT * FROM "content_batch" LIMIT 10
+
+
+
+SELECT "orderId", COUNT("productOrderId") AS cnt
+FROM "naver_order_product" AS n
+LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+WHERE p.nick = '판토모나하이퍼포머'
+GROUP BY "orderId"
+HAVING COUNT("productOrderId") > 1
+
+
+
+
+
