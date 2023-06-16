@@ -57,7 +57,7 @@ LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")
 WHERE 	"paymentDate" IS NOT NULL 
 Order BY "paymentDate" DESC
-LIMIT 10000
+LIMIT 1000
 
 
 -- 3. 쿠팡 주문수집 여부 확인
@@ -65,7 +65,7 @@ SELECT "orderedAt", *
 FROM "coupang_order"
 WHERE "orderedAt" IS NOT NULL
 Order BY "orderedAt" DESC
-LIMIT 10000
+LIMIT 1000
 
 
 -- 4. 이지어드민 매핑 누락 확인 (스토어)

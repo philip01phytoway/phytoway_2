@@ -52,6 +52,7 @@ WHERE option_code = '32006841737'
 
 SELECT * FROM "cost_marketing"
 
+
 SELECT * FROM "cost_product"
 
 
@@ -79,5 +80,7 @@ HAVING COUNT("productOrderId") > 1
 
 
 
+
+SELECT * FROM "settlement"
 
 
