@@ -28,6 +28,9 @@ INSERT INTO "content_batch" (yymm, yyww, yymmdd, channel, brand, nick, page_type
 SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price FROM "content_view3"
 
 
+select count(*) from "order_batch"
+
+
 ---------------------------------
 
 -- 주문
@@ -134,6 +137,7 @@ FROM "coupang_order" AS o,
 			"vendorItemId" CHARACTER varying(255)											
 		)
 LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
+--where "vendorItemId" = '7350014720'
 WHERE op."option" IS NULL 
 
 

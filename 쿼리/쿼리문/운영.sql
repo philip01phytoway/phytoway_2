@@ -84,3 +84,69 @@ HAVING COUNT("productOrderId") > 1
 SELECT * FROM "settlement"
 
 
+
+select * from "Stock"
+--where product LIKE '%밤%'
+WHERE INPUT > 0
+order by yymmdd
+
+
+
+
+
+SELECT *
+FROM "order_batch"
+WHERE KEY = '최지환al*****@na'
+
+
+-- 3회 이상 주문? - o
+-- 주문일 7개월 이내? : 
+-- 만료일? - 딱 복용기간만.
+복용기간, 복용기간 -14, 복용기간+14
+주문일 + 2
+-- key_rank인지, key_nick_rank인지? - key_nick_rank
+-- 고객 리스트
+
+
+
+-- 주문 내역
+SELECT *
+FROM 	(
+			select 	
+						dense_rank() over(partition by key, nick order by order_date_time) as "key_nick_rank",
+						*
+			from "order_batch"
+			where order_id <> '' and phytoway = 'y' AND order_status = '주문'
+		) AS t
+WHERE order_date > '2022-11-16' AND brand IN ('판토모나', '써큐시안') AND key_nick_rank >= 3 
+
+
+
+
+-- 고객 명단
+-- where절 nick 조건 바꿔서 사용
+SELECT DISTINCT KEY, order_name, cust_id, order_tel
+FROM 	(
+			select 	
+						dense_rank() over(partition by key, nick order by order_date_time) as "key_nick_rank",
+						*
+			from "order_batch"
+			where order_id <> '' and phytoway = 'y' AND order_status = '주문'
+		) AS t
+WHERE order_date > '2022-11-16' AND brand IN ('판토모나', '써큐시안') AND key_nick_rank >= 3 
+AND nick = '판토모나하이퍼포머'
+
+
+
+
+SELECT * FROM "AD_CoupangBrand" LIMIT 1
+
+SELECT *
+FROM "AD_Coupang"
+WHERE product2_id IN ('86226494116', '86226494125')
+
+
+= '85873798339'
+
+
+SELECT * FROM "ad_mapping3"
