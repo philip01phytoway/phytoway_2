@@ -110,7 +110,7 @@ WHERE pp.no IS NULL
 
 
 -- 5. 네이버 매핑 누락 확인
-SELECT DISTINCT "optionCode", "productName", "productOption"
+SELECT  DISTINCT "optionCode", "productName", "productOption"
 FROM "naver_order_product" AS o
 LEFT JOIN "naver_option" AS op ON (o."optionCode" = op."option_code")
 WHERE op."option_code" IS NULL 
@@ -346,6 +346,9 @@ WITH naver_mapping AS (
 
 SELECT DISTINCT id, "B", "D"
 FROM "naver_mapping"
+
+
+select * from "AD_Naver"
 
 
 -- 11. 네이버 광고 매핑 중복 확인
