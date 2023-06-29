@@ -150,3 +150,29 @@ WHERE product2_id IN ('86226494116', '86226494125')
 
 
 SELECT * FROM "ad_mapping3"
+
+
+
+select * from "EZ_Order" limit 1
+
+
+SELECT * FROM "cac_cafe"
+
+
+
+SELECT * FROM "cost_product" Order BY INDEX DESC
+
+
+
+SELECT * FROM "cost_marketing" Order BY INDEX DESC
+
+
+SELECT * FROM "AD_CoupangBrand"
+WHERE reg_date = ''
+
+
+
+SELECT * 
+FROM "ad_batch" 
+WHERE channel = '쿠팡' AND ad_type = '브랜드광고' AND yymmdd BETWEEN '2023-06-23' AND '2023-06-28'
+

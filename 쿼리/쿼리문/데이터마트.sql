@@ -55,6 +55,8 @@ SELECT * FROM "AD_CoupangBrand" Order BY reg_date DESC LIMIT 10000
 -- 구글 광고
 SELECT * FROM "ad_google3" Order BY reg_date DESC
 
+
+
 -- 구글 광고 매핑 누락 확인
 광고그룹 id가 광고보고서에는 있는데 매핑 테이블에는 없는지
 
