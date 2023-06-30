@@ -28,7 +28,7 @@ INSERT INTO "content_batch" (yymm, yyww, yymmdd, channel, brand, nick, page_type
 SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price FROM "content_view3"
 
 
-select count(*) from "order_batch"
+select count(*) from "content_batch"
 
 
 ---------------------------------
