@@ -28,7 +28,7 @@ INSERT INTO "content_batch" (yymm, yyww, yymmdd, channel, brand, nick, page_type
 SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price FROM "content_view3"
 
 
-select count(*) from "content_batch"
+select * from "content_batch" limit 100
 
 
 ---------------------------------
@@ -80,7 +80,7 @@ WHERE s.ez_store_code IS NULL
 
 
 -- 5. 이지어드민 매핑 누락 확인 (번들)
-SELECT DISTINCT p.name
+SELECT DISTINCT p.name, p.product_id
 FROM	"EZ_Order" as o,																		
 		jsonb_to_recordset(o.order_products) as p(																	
 			name character varying(255),																
@@ -90,6 +90,7 @@ LEFT JOIN "bundle" as b on (p.product_id = b.ez_code)
 LEFT JOIN "product" as pp on (b.product_no = pp.no)
 WHERE b.ez_code IS NULL 
 -- p.name IS null
+
 
 
 -- 6. 이지어드민 매핑 누락 확인 (상품)
@@ -137,11 +138,11 @@ FROM "coupang_order" AS o,
 			"vendorItemId" CHARACTER varying(255)											
 		)
 LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
---where "vendorItemId" = '7350014720'
 WHERE op."option" IS NULL 
 
 
 -- 8. 쿠팡 매핑 중복 확인
+
 
 -- 9. 쿠팡 제트배송 매핑 누락 확인
 SELECT distinct option_id, option_name

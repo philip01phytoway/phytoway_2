@@ -203,15 +203,14 @@ from 	(
 					AS dead_date_2,
 					dense_rank() over(partition by key order by order_date_time) as "key_rank"
 			from 	"order_batch"
-			where order_id <> '' AND phytoway = 'y' and prd_amount_mod < 500000
+			where order_id <> '' AND phytoway = 'y' and prd_amount_mod < 500000 and order_status = '주문'
 		) as t
 where dead_date_2 BETWEEN '2023-01-01' AND '2023-06-01'			
 group by key_rank
 
 
 -- 재구매건수 전체
-select	nick, key_rank, sum(order_cnt), sum(prd_amount_mod) as dead_price
---select order_date_time, order_id, key, nick, key_nick_rank, next_order_date_2, dead_date_2
+select 	key_rank, sum(order_cnt) as reorder_cnt, sum(prd_amount_mod) as reorder_price
 from 	(
 			select 	*,
 					TO_CHAR(CASE 
@@ -222,19 +221,15 @@ from 	(
 					lag(order_date, -1) over (partition by key order BY order_date_time asc) as next_order_date_2,
 					dense_rank() over(partition by key order by order_date_time) as "key_rank"
 			from 	"order_batch"
-			where order_id <> '' AND phytoway = 'y' and prd_amount_mod < 500000
+			where order_id <> '' AND phytoway = 'y' and prd_amount_mod < 500000 and order_status = '주문'
 		) as t
 WHERE dead_date_2 BETWEEN '2023-01-01' AND '2023-06-01' AND (next_order_date_2 BETWEEN order_date AND dead_date_2)
-group by nick, key_rank
-
-
-
+group by key_rank
 
 
 
 -- 만료건수 제품별
 select	nick, key_nick_rank, sum(order_cnt), sum(prd_amount_mod) as dead_price
---select order_date_time, order_id, key, nick, key_nick_rank, dead_date_2, next_order_date_2
 from 	(
 			select 	*,
 					TO_CHAR(CASE 
@@ -242,10 +237,9 @@ from 	(
 								ELSE order_date::date + interval '1 day' * order_qty * product_qty * term * 1.33
 							END, 'yyyy-mm-dd')
 					AS dead_date_2,
-					--lag(order_date, -1) over (partition by key, nick order BY order_date_time asc) as next_order_date_2,
 					dense_rank() over(partition by key, nick order by order_date_time) as "key_nick_rank"
 			from 	"order_batch"
-			where order_id <> '' AND phytoway = 'y' and prd_amount_mod < 500000
+			where order_id <> '' AND phytoway = 'y' and prd_amount_mod < 500000 and order_status = '주문'
 		) as t
 where dead_date_2 BETWEEN '2023-01-01' AND '2023-06-01'			
 group by nick, key_nick_rank
@@ -253,9 +247,8 @@ group by nick, key_nick_rank
 
 
 
--- 재구매건수 
+-- 재구매건수 제품별
 select	nick, key_nick_rank, sum(order_cnt), sum(prd_amount_mod) as dead_price
---select order_date_time, order_id, key, nick, key_nick_rank, next_order_date_2, dead_date_2
 from 	(
 			select 	*,
 					TO_CHAR(CASE 
@@ -266,7 +259,7 @@ from 	(
 					lag(order_date, -1) over (partition by key, nick order BY order_date_time asc) as next_order_date_2,
 					dense_rank() over(partition by key, nick order by order_date_time) as "key_nick_rank"
 			from 	"order_batch"
-			where order_id <> '' AND phytoway = 'y' and prd_amount_mod < 500000
+			where order_id <> '' AND phytoway = 'y' and prd_amount_mod < 500000 and order_status = '주문'
 		) as t
 WHERE dead_date_2 BETWEEN '2023-01-01' AND '2023-06-01' AND (next_order_date_2 BETWEEN order_date AND dead_date_2)
 group by nick, key_nick_rank
