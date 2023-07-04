@@ -176,3 +176,8 @@ SELECT *
 FROM "ad_batch" 
 WHERE channel = '쿠팡' AND ad_type = '브랜드광고' AND yymmdd BETWEEN '2023-06-23' AND '2023-06-28'
 
+
+
+
+select * from "naver_order_product" limit 1
+
