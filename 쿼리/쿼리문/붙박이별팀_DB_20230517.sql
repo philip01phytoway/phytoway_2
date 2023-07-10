@@ -102,6 +102,8 @@ Order BY yymmdd DESC, channel, nick, page_type
 
 
 
+
+
 -- 참고 쿼리문 (기존 데이터마트 쿼리문)
 
 -- 컨텐츠 통합 시트 > 자상호여부별 탭

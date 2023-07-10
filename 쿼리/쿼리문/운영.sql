@@ -181,3 +181,35 @@ WHERE channel = '쿠팡' AND ad_type = '브랜드광고' AND yymmdd BETWEEN '202
 
 select * from "naver_order_product" limit 1
 
+
+-- 네이버 신제품광고
+SELECT * FROM "ad_naver_nosp"
+
+SELECT * FROM "ad_batch" WHERE campaign_type = '신제품광고'
+
+
+
+
+
+
+SELECT * FROM "coupang_order" LIMIT 1
+
+
+SELECT * FROM "ad_naver_nosp"
+
+
+
+SELECT * FROM "order_batch" LIMIT 10000
+
+
+SELECT * FROM "EZ_Order" LIMIT 100
+
+
+SELECT ("shippingAddress" ->> 'detailedAddress')::text  FROM "naver_order_product" LIMIT 100
+
+
+SELECT ("receiver" ->> 'addr2') FROM "coupang_order" LIMIT 100
+
+
+{"name":"이수정","safeNumber":"","receiverNumber":null,"addr1":"경기도 오산시 세마문학로 50","addr2":"110동 1904호 (지곶동,e편한세상) ( 지곶동, e편한세상 오산세교 )","postCode":"18102"}
+

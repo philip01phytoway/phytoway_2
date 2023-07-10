@@ -311,7 +311,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			LEFT("paymentDate", 10) || ' ' || SUBSTRING("paymentDate", 12, 8) AS "order_date_time",
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -351,7 +351,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			LEFT("paymentDate", 10) || ' ' || SUBSTRING("paymentDate", 12, 8) AS "order_date_time",
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -407,7 +407,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			END AS order_date_time, 
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -468,7 +468,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			END AS order_date_time, 
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -541,7 +541,7 @@ SELECT
 			("receiver" ->> 'name') AS "receiverName",
 			REPLACE(("receiver" ->> 'safeNumber'), '-', '') AS "receiverTel", -- 이건 case when 처리 필요한지?
 			("receiver" ->> 'postCode') AS "receiverZip",
-			("receiver" ->> 'addr1') AS "receiverAddress",
+			("receiver" ->> 'addr1') || ' ' || ("receiver" ->> 'addr2') AS "receiverAddress",
 			
 			'쿠팡' AS store,
 			
@@ -623,7 +623,7 @@ FROM  (
 						("receiver" ->> 'name') AS "receiverName",
 						REPLACE(("receiver" ->> 'safeNumber'), '-', '') AS "receiverTel", -- 이건 case when 처리 필요한지?
 						("receiver" ->> 'postCode') AS "receiverZip",
-						("receiver" ->> 'addr1') AS "receiverAddress",
+						("receiver" ->> 'addr1') || ' ' || ("receiver" ->> 'addr2') AS "receiverAddress",
 						
 						'쿠팡' AS store,
 						
@@ -1114,7 +1114,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			LEFT("paymentDate", 10) || ' ' || SUBSTRING("paymentDate", 12, 8) AS "order_date_time",
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -1154,7 +1154,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			LEFT("paymentDate", 10) || ' ' || SUBSTRING("paymentDate", 12, 8) AS "order_date_time",
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -1210,7 +1210,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			END AS order_date_time, 
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -1271,7 +1271,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			END AS order_date_time, 
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -1345,7 +1345,7 @@ SELECT
 			("receiver" ->> 'name') AS "receiverName",
 			REPLACE(("receiver" ->> 'safeNumber'), '-', '') AS "receiverTel", -- 이건 case when 처리 필요한지?
 			("receiver" ->> 'postCode') AS "receiverZip",
-			("receiver" ->> 'addr1') AS "receiverAddress",
+			("receiver" ->> 'addr1') || ' ' || ("receiver" ->> 'addr2') AS "receiverAddress",
 			
 			'쿠팡' AS store,
 			
@@ -1427,7 +1427,7 @@ FROM  (
 						("receiver" ->> 'name') AS "receiverName",
 						REPLACE(("receiver" ->> 'safeNumber'), '-', '') AS "receiverTel", -- 이건 case when 처리 필요한지?
 						("receiver" ->> 'postCode') AS "receiverZip",
-						("receiver" ->> 'addr1') AS "receiverAddress",
+						("receiver" ->> 'addr1') || ' ' || ("receiver" ->> 'addr2') AS "receiverAddress",
 						
 						'쿠팡' AS store,
 						
@@ -1919,7 +1919,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			LEFT("paymentDate", 10) || ' ' || SUBSTRING("paymentDate", 12, 8) AS "order_date_time",
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -1975,7 +1975,7 @@ SELECT 	"ordererName" || "ordererId" AS "key",
 			END AS order_date_time, 
 			
 			"ordererName", "ordererId", "ordererTel", 	 
-			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT AS recv_address, 
+			("shippingAddress" ->> 'name')::text AS "recv_name", REPLACE(("shippingAddress" ->> 'tel1')::text, '-', '') AS "recv_tel", ("shippingAddress" ->> 'zipCode')::TEXT AS recv_zip, ("shippingAddress" ->> 'baseAddress')::TEXT || ' ' || ("shippingAddress" ->> 'detailedAddress')::text AS recv_address, 
 			
 			CASE 
 				WHEN "deliveryAttributeType" = 'ARRIVAL_GUARANTEE' THEN '스마트스토어_풀필먼트'
@@ -2049,7 +2049,7 @@ SELECT
 			("receiver" ->> 'name') AS "receiverName",
 			REPLACE(("receiver" ->> 'safeNumber'), '-', '') AS "receiverTel", -- 이건 case when 처리 필요한지?
 			("receiver" ->> 'postCode') AS "receiverZip",
-			("receiver" ->> 'addr1') AS "receiverAddress",
+			("receiver" ->> 'addr1') || ' ' || ("receiver" ->> 'addr2') AS "receiverAddress",
 			
 			'쿠팡' AS store,
 			
@@ -2130,7 +2130,7 @@ FROM  (
 						("receiver" ->> 'name') AS "receiverName",
 						REPLACE(("receiver" ->> 'safeNumber'), '-', '') AS "receiverTel", -- 이건 case when 처리 필요한지?
 						("receiver" ->> 'postCode') AS "receiverZip",
-						("receiver" ->> 'addr1') AS "receiverAddress",
+						("receiver" ->> 'addr1') || ' ' || ("receiver" ->> 'addr2') AS "receiverAddress",
 						
 						'쿠팡' AS store,
 						
