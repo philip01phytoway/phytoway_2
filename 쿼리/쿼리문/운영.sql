@@ -148,3 +148,16 @@ SELECT * FROM "product" Order BY NO
 SELECT * FROM "cac_jisikin" WHERE yymmdd = ''
 
 
+SELECT * FROM "naver_settlement_case"
+
+
+ LIMIT 1
+
+
+
+select * from "Non_Order" where order_num LIKE '% '
+
+SELECT * FROM "coupang_sales"
+
+
+
