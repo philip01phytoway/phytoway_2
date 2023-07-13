@@ -619,7 +619,7 @@ order by base_date desc, warehouse, onnuri_name, stock_type
 
 
 
-
-
+select * from "out_view"
+where order_date > '2023-06-01' and store = 'B2B_제트배송_창고이동'
 
 

@@ -179,6 +179,9 @@ FROM "ad_google3" AS g
 LEFT JOIN "ad_mapping3" AS m ON (g.adgroup_id = m.adgroup_id)
 WHERE m.adgroup_id IS NULL 
 
+
+
+
 SELECT *
 FROM "ad_mapping3"
 WHERE channel_no = 2

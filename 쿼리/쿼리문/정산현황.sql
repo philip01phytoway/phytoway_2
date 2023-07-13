@@ -102,8 +102,10 @@ where "productOrderId" = '2023050384254491'
 
 
 -- 채권 요약
+-- 채권 개념에 취소, 환불 포홤되어야 하는지는 논의 필요. 일단 배제했음.
+-- 나중에 settle_4도 적용해서 만들기.
 with naver_settlement as (
-	select "productOrderId", max("settle_1") as settle_1, max("settle_2") as settle_2, max("settle_3") as settle_3, max("settle_4") as settle_4
+	select "productOrderId", max(case when "settle_1" <> 0 then "settle_1" end) as settle_1, max(case when "settle_2" <> 0 then "settle_2" end) as settle_2, max(case when "settle_3" <> 0 then "settle_3" end) as settle_3, max(case when "settle_4" <> 0 then "settle_4" end) as settle_4
 	from 	(
 				select 	*,
 						case 
@@ -124,27 +126,29 @@ with naver_settlement as (
 						end as settle_4
 				from 	(
 							select 	*, 
-									dense_rank() over(partition by "productOrderId" order by "settleBasisDate" asc, "settleType" desc) as rank
+									row_number() over(partition by "productOrderId" order by "settleBasisDate" asc, "settleType" desc) as rank
 							from public.naver_settlement_case
 						) as t
-				 where "settleCompleteDate" > '2023-05-31' and "settleCompleteDate" < '2023-07-01'
+				 where "settleCompleteDate" > '2023-05-31' and "settleCompleteDate" < '2023-07-01' and "productOrderType" = 'PROD_ORDER'
 			) as t2
 	group by "productOrderId"
 )
 
--- select 	sum(
--- 			CASE 
--- 				WHEN "productOrderStatus" in ('EXCHANGED', 'CANCELED', 'RETURNED') THEN "totalPaymentAmount" * -1
--- 				else "totalPaymentAmount"
--- 			end
--- 		) as "매출액", 
--- 		sum(
--- 			CASE 
--- 				WHEN "productOrderStatus" in ('EXCHANGED', 'CANCELED', 'RETURNED') THEN "expectedSettlementAmount" * -1
--- 				else "expectedSettlementAmount"
--- 			end
--- 		) as "매출액(수수료제외)", 
--- 		sum(case when "productOrderStatus" = 'PURCHASE_DECIDED' then "expectedSettlementAmount" end) as "정산액",
+select 	left(n."paymentDate", 10), sum(
+			CASE 
+				WHEN "productOrderStatus" in ('EXCHANGED', 'CANCELED', 'RETURNED') THEN 0
+				else "totalPaymentAmount"
+			end
+		) as "매출액", 
+		sum(
+			CASE 
+				WHEN "productOrderStatus" in ('EXCHANGED', 'CANCELED', 'RETURNED') THEN 0
+				else "expectedSettlementAmount"
+			end
+		) as "매출액(수수료제외)", 
+		sum(case when "productOrderStatus" = 'PURCHASE_DECIDED' then "expectedSettlementAmount" end) as "정산액",
+		COALESCE(sum("settle_1"), 0) + COALESCE(sum("settle_2"), 0) + COALESCE(sum("settle_3"), 0) + COALESCE(sum("settle_4"), 0) as "입금액"
+		
 -- 		sum(case when "productOrderStatus" = 'PURCHASE_DECIDED' then "settle_1" end) 
 -- 		+ sum(case when "productOrderStatus" = 'PURCHASE_DECIDED' then "settle_2" end) 
 -- 		+ sum(case when "productOrderStatus" = 'PURCHASE_DECIDED' then "settle_3" end) as "입금액",
@@ -154,28 +158,13 @@ with naver_settlement as (
 -- 			+ sum(case when "productOrderStatus" = 'PURCHASE_DECIDED' then "settle_2" end) 
 -- 			+ sum(case when "productOrderStatus" = 'PURCHASE_DECIDED' then "settle_3" end)
 -- 		) as "채권금액"
-select  distinct n."productOrderStatus" --n."productOrderId", n."productOrderStatus", "totalPaymentAmount", "expectedSettlementAmount", settle_1, settle_2, settle_3, settle_4
+
+-- select *		
 from "naver_order_product2" as n 
 left join naver_settlement as s on (n."productOrderId" = s."productOrderId")
 where s."productOrderId" is not null 
-
-
-
-select distinct "productOrderId"
-from "naver_settlement_case" as s
-left join 
-where "settleCompleteDate" > '2023-05-31' and "settleCompleteDate" < '2023-07-01'
-and "productOrderType" = 'PROD_ORDER'
-
-
-
-
-
-select *
-from "naver_settlement_case"
-
-
-s."settleCompleteDate" > '2023-05-31' and s."settleCompleteDate" < '2023-07-01'
+group by left(n."paymentDate", 10)
+order by left(n."paymentDate", 10)
 
 
 -- 매출 - 수수료 - 부가사용료 = 정산액
@@ -190,28 +179,27 @@ from "naver_settlement_daily"
 -- vat 확인
 
 
+-- 일자별로 채권이 딱딱 나오게끔 처리해줘야 함.
 
- order by settleBasis
-
-select "paymentDate", "productOrderId", "productOrderStatus", "totalPaymentAmount"
-from "naver_order_product2"
-where "paymentDate" >= '2023-06-01' and "paymentDate" < '2023-07-01' --and "productOrderStatus" in ('DELIVERING', 'PURCHASE_DECIDED', )
-order by "paymentDate"
+-- 반품 배송비도.
 
 
-
-select distinct "productOrderStatus"
-from "naver_order_product2"
-
-
-select *
-from "naver_order_product2"
-where "productOrderId" = '2023062353019631'
+-- 채권과 정산의 시점 차이가 존재해서 일자별로 그날 발생한 채권 중에 얼마가 입금되었는지 알려주는 표는 작성하기 힘들다.
+-- 단지 그날 발생한 채권과 그날 입금된 돈을 알려주는 표와, 누적으로 채권이 얼마가 남아있는지를 알려주는 표가 있으면 된다.
 
 
+---------------------------------------------------
 
-select sum("settleExpectAmount" ) from "naver_settlement_case" as s
-where s."settleCompleteDate" > '2023-05-31' and s."settleCompleteDate" < '2023-07-01'
+-- 쿠팡
+
+---------------------------------------------------
+
+
+-- 쿠팡은 key를 어떻게 매기냐면
+-- 상품주문번호가 없으니까 주문번호_옵션번호_옵션넘버로 붙인다.
+-- 간혹 가다 옵션번호가 같은게 있을 수 있다.
+
+
 
 
 
