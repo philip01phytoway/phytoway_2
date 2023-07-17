@@ -202,4 +202,44 @@ from "naver_settlement_daily"
 
 
 
+select * from "coupang_settlement_case"
+
+
+
+select * from "coupang_settlement_history"
+
+
+
+
+with c_order as (
+		select "orderId", "paidAt", "vendorItemId", "status", "cancelCount", "canceled", "confirmDate", p."orderPrice" - p."discountPrice" as "price"
+		from "coupang_order" AS o,																
+				json_to_recordset(o."orderItems") as p(																	
+					"vendorItemName" CHARACTER varying(255),																
+					"vendorItemId" CHARACTER varying(255),
+					"shippingCount" INTEGER,
+					"cancelCount" INTEGER,
+					"orderPrice" INTEGER,
+					"discountPrice" INTEGER,
+					"confirmDate" 	CHARACTER varying(255),
+					"invoiceNumberUploadDate" CHARACTER varying(255),
+					"canceled" CHARACTER varying(255)
+				)
+	), c_settle as (
+		select "orderId"::bigint, "vendorItemId", "settlementAmount", "recognitionDate", "settlementDate"
+		from "coupang_settlement_case" AS o,																
+				json_to_recordset(o."items") as p(																	
+					"vendorItemName" CHARACTER varying(255),																
+					"vendorItemId" CHARACTER varying(255),
+					"quantity" INTEGER,
+					"saleAmount" INTEGER,
+					"settlementAmount" INTEGER
+				)
+	)		
+	
+select *
+from "c_order" as o
+left join "c_settle" as s on (o."orderId" = s."orderId" and o."vendorItemId" = s."vendorItemId")
+
+
 
