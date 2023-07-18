@@ -243,3 +243,64 @@ left join "c_settle" as s on (o."orderId" = s."orderId" and o."vendorItemId" = s
 
 
 
+select * 
+from "coupang_settlement_history"
+order by "revenueRecognitionDateFrom"
+
+검증을 하려면 매출인식일 기준으로 해야 댐.
+
+
+
+select * 
+from "coupang_settlement_case" 
+where "recognitionDate" between '2023-01'
+
+order by "recognitionDate"
+
+
+
+
+select * from "coupang_order"
+
+
+
+
+select * from "coupang_return_cancel"
+
+
+
+
+
+with c_order as (
+
+	select "orderId", "paidAt", "vendorItemId", "status", "cancelCount", "canceled", "confirmDate", p."orderPrice" - p."discountPrice" as "price"
+	from "coupang_order" AS o,																
+			json_to_recordset(o."orderItems") as p(																	
+				"vendorItemName" CHARACTER varying(255),																
+				"vendorItemId" CHARACTER varying(255),
+				"shippingCount" INTEGER,
+				"cancelCount" INTEGER,
+				"orderPrice" INTEGER,
+				"discountPrice" INTEGER,
+				"confirmDate" 	CHARACTER varying(255),
+				"invoiceNumberUploadDate" CHARACTER varying(255),
+				"canceled" CHARACTER varying(255)
+			)
+	), c_cs as (		
+			
+select *
+from "coupang_return_cancel" AS o,																
+		json_to_recordset(o."returnItems") as p(																	
+			"vendorItemName" CHARACTER varying(255),																
+			"vendorItemId" CHARACTER varying(255)
+		)
+	)
+	
+select *
+from "c_order" as o
+left join "c_cs" as c on (o."orderId" = c."orderId" and o."vendorItemId" = c."vendorItemId")
+where c."orderId" is null 
+
+
+
+

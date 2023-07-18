@@ -145,32 +145,11 @@ AND nick = '판토모나하이퍼포머'
 SELECT * FROM "product" Order BY NO
 
 
-SELECT * FROM "cac_jisikin" WHERE yymmdd = ''
-
-
-SELECT * FROM "naver_settlement_case"
-
-
- LIMIT 1
 
 
 
-select * from "Non_Order" where order_num LIKE '% '
-
-SELECT * FROM "coupang_sales"
+SELECT * FROM "order_batch" LIMIT 100
 
 
 
 SELECT * FROM "coupang_settlement_case"
-
-
-[{"taxType": "TAX", "productId": 7319830904, "productName": "판토모나 비오틴 하이퍼포머", "vendorItemId": 5456714754, "vendorItemName": "판토모나 비오틴 하이퍼포머, 240정, 1개", "salePrice": 58990, "quantity": 1, "coupangDiscountCoupon": 0, "discountCouponPolicyAgreement": false, "saleAmount": 58990, "sellerDiscountCoupon": 0, "downloadableCoupon": 0, "serviceFee": 6253, "serviceFeeVat": 625, "serviceFeeRatio": 10.6, "settlementAmount": 52112, "couranteeFeeRatio": 0, "couranteeFee": 0, "couranteeFeeVat": 0, "storeFeeDiscountVat": 0, "storeFeeDiscount": 0, "externalSellerSkuCode": ""}]
-
-
-
-SELECT * FROM "coupang_settlement_history"
-ORDER BY "settlementDate"
-
-
-
-[{"taxType": "TAX", "productId": 7319830904, "productName": "판토모나 비오틴 하이퍼포머", "vendorItemId": 5456714754, "vendorItemName": "판토모나 비오틴 하이퍼포머, 240정, 1개", "salePrice": 58990, "quantity": 1, "coupangDiscountCoupon": 0, "discountCouponPolicyAgreement": false, "saleAmount": 58990, "sellerDiscountCoupon": 0, "downloadableCoupon": 0, "serviceFee": 6253, "serviceFeeVat": 625, "serviceFeeRatio": 10.6, "settlementAmount": 52112, "couranteeFeeRatio": 0, "couranteeFee": 0, "couranteeFeeVat": 0, "storeFeeDiscountVat": 0, "storeFeeDiscount": 0, "externalSellerSkuCode": ""}]
