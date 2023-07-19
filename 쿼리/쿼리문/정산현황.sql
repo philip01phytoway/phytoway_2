@@ -302,5 +302,24 @@ left join "c_cs" as c on (o."orderId" = c."orderId" and o."vendorItemId" = c."ve
 where c."orderId" is null 
 
 
+구매확정 후 취소하면 매출을 0으로 잡으면 되잖아?
+
+취소가 없는 주문건과
+주문을 포함한 취소건.
+이 두개를 합치면 되겠네.
+
+select coupang_order
+
+
+
+
+
+
+
+
+
+
+
+
 
 

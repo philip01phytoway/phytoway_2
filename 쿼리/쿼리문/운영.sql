@@ -153,3 +153,28 @@ SELECT * FROM "order_batch" LIMIT 100
 
 
 SELECT * FROM "coupang_settlement_case"
+
+
+
+SELECT "orderId", "saleType", "saleDate", "recognitionDate", "settlementDate", "finalSettlementDate", "deliveryFee", "taxType", "productId", "productName", "vendorItemId", "vendorItemName", "salePrice", quantity, "coupangDiscountCoupon", "discountCouponPolicyAgreement", "saleAmount", "sellerDiscountCoupon", "downloadableCoupon", "serviceFee", "serviceFeeVat", "serviceFeeRatio", "settlementAmount", "couranteeFeeRatio", "couranteeFee", "couranteeFeeVat", "storeFeeDiscountVat", "storeFeeDiscount", "externalSellerSkuCode"
+--select sum("settlementAmount")
+--select ("deliveryFee" ->> 'settlementAmount')
+FROM public.coupang_settlement_case
+where 	--"orderId" = '10000183218467'
+
+"recognitionDate" between '2023-06-19' and '2023-06-25'
+
+
+
+
+SELECT DISTINCT "store" FROM "order_batch" Order BY "store"
+
+
+
+SELECT * FROM "order_batch" WHERE order_id = '20000178562967'
+
+
+store = '쿠팡_제트배송'
+
+
+
