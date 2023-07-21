@@ -178,3 +178,12 @@ store = '쿠팡_제트배송'
 
 
 
+SELECT SUM(cost), SUM(click_cnt), SUM(order_cnt)
+FROM "ad_batch" 
+WHERE yymmdd = '2023-07-19' AND channel = '쿠팡'
+AND account <> 'A00197911'
+
+
+
+
+
