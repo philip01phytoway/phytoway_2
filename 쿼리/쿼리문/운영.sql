@@ -183,7 +183,77 @@ FROM "ad_batch"
 WHERE yymmdd = '2023-07-19' AND channel = '쿠팡'
 AND account <> 'A00197911'
 
+-- 전화번호 db
+-- 기간 및 전화번호 수정하여 사용
+-- 전화번호 마지막 쉼표 제거 필요
+SELECT *
+FROM 	(
+			SELECT 	*,
+						dense_rank() over(partition by key order by order_date_time) as "key_rank",
+						dense_rank() over(partition by key, nick order by order_date_time) as "key_nick_rank"
+			FROM "order_batch"
+		) AS t
+WHERE --order_date BETWEEN '2023-01-01' AND '2023-07-01'
+--AND 
+order_tel IN (
+'01091957198',
+'01024082390',
+'01052229970',
+'01056111545',
+'01085996602',
+'01066698323',
+'01046508648',
+'01045984184',
+'01066341095',
+'01090984749',
+'01044112940',
+'01071256863',
+'01041494644',
+'01071353673',
+'01091914562'
+)
+
+
+
+SUM(score)
+
+
+-- 날짜 전처리
+-- YMD2 join
+-- 상품 매칭
+-- 주차별 상품별 전체 리뷰 개수, A급 리뷰 개수, S급 리뷰 개수
+
+
+SELECT yyww, COUNT(*)
+FROM 	(
+			SELECT 	replace(left(review_date, 10), '.', '-') AS "review_date_mod",
+						*
+			FROM "naver_review" 
+		) AS r
+LEFT JOIN "YMD2" AS y ON (r.review_date_mod = y.yymmdd)
+GROUP by y.yyww
+
+
+Order BY review_date
+
+WHERE review_date < '2022-04-01'
+
+
+SELECT r.product_order_no, o."productOrderId"
+FROM "naver_review" AS r
+LEFT JOIN "naver_order_product" AS o ON (r.product_order_no = o."productOrderId")
+WHERE o."productOrderId" IS NULL 
 
 
 
 
+
+SELECT *
+FROM "naver_review" AS r
+LEFT JOIN "naver_order_product" AS o ON (r.product_order_no = o."productOrderId")
+WHERE o."productOrderId" IS NULL 
+
+
+SELECT *
+FROM 
+2021073177737791

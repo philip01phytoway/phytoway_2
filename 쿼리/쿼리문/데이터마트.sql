@@ -160,6 +160,9 @@ FROM "ad_view7"
 WHERE store IS null
 
 
+SELECT * FROM "ad_mapping3" WHERE channel_no = 5
+SELECT * FROM "AD_Coupang" WHERE Product2_id = '86215372576'
+
 
 -- 쿠팡 상품광고 매핑 누락 확인
 SELECT DISTINCT ad_account, c.product2, c.product2_id 
