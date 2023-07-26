@@ -224,25 +224,134 @@ SUM(score)
 -- 주차별 상품별 전체 리뷰 개수, A급 리뷰 개수, S급 리뷰 개수
 
 
+------------------------
+ 
+-- 제품 구분 x
+
+------------------------
+
+
+-- 전체 리뷰 개수
 SELECT yyww, COUNT(*)
 FROM 	(
 			SELECT 	replace(left(review_date, 10), '.', '-') AS "review_date_mod",
 						*
-			FROM "naver_review" 
+			FROM "naver_review" AS r
+			LEFT JOIN "naver_order_product" AS n ON (r.product_order_no = n."productOrderId")
+			LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+			LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+			WHERE n."productOrderId" IS NOT NULL 
 		) AS r
 LEFT JOIN "YMD2" AS y ON (r.review_date_mod = y.yymmdd)
 GROUP by y.yyww
+Order BY y.yyww DESC
 
 
+-- 포토/영상 리뷰 개수
+SELECT yyww, COUNT(*)
+FROM 	(
+			SELECT 	replace(left(review_date, 10), '.', '-') AS "review_date_mod",
+						*
+			FROM "naver_review" AS r
+			LEFT JOIN "naver_order_product" AS n ON (r.product_order_no = n."productOrderId")
+			LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+			LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+			WHERE n."productOrderId" IS NOT NULL AND photo_video <> ''
+		) AS r
+LEFT JOIN "YMD2" AS y ON (r.review_date_mod = y.yymmdd)
+GROUP by y.yyww
+Order BY y.yyww desc
+
+
+-- 포토/영상 & 300자 이상 리뷰 개수
+SELECT yyww, COUNT(*)
+FROM 	(
+			SELECT 	replace(left(review_date, 10), '.', '-') AS "review_date_mod",
+						*
+			FROM "naver_review" AS r
+			LEFT JOIN "naver_order_product" AS n ON (r.product_order_no = n."productOrderId")
+			LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+			LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+			WHERE n."productOrderId" IS NOT NULL AND photo_video <> '' AND LENGTH(review) > 299
+		) AS r
+LEFT JOIN "YMD2" AS y ON (r.review_date_mod = y.yymmdd)
+GROUP by y.yyww
+Order BY y.yyww desc
+
+
+------------------------
+ 
+-- 제품 구분 O
+
+------------------------
+
+-- 전체 리뷰 개수
+SELECT yyww, r.brand, COUNT(*)
+FROM 	(
+			SELECT 	replace(left(review_date, 10), '.', '-') AS "review_date_mod",
+						*
+			FROM "naver_review" AS r
+			LEFT JOIN "naver_order_product" AS n ON (r.product_order_no = n."productOrderId")
+			LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+			LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+			WHERE n."productOrderId" IS NOT NULL 
+		) AS r
+LEFT JOIN "YMD2" AS y ON (r.review_date_mod = y.yymmdd)
+WHERE r.brand = '써큐시안'
+GROUP by y.yyww, r.brand
+Order BY y.yyww DESC
+
+
+-- 포토/영상 리뷰 개수
+SELECT yyww, r.brand, COUNT(*)
+FROM 	(
+			SELECT 	replace(left(review_date, 10), '.', '-') AS "review_date_mod",
+						*
+			FROM "naver_review" AS r
+			LEFT JOIN "naver_order_product" AS n ON (r.product_order_no = n."productOrderId")
+			LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+			LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+			WHERE n."productOrderId" IS NOT NULL AND photo_video <> ''
+		) AS r
+LEFT JOIN "YMD2" AS y ON (r.review_date_mod = y.yymmdd)
+WHERE r.brand = '써큐시안'
+GROUP by y.yyww, r.brand
+Order BY y.yyww desc
+
+
+-- 포토/영상 & 300자 이상 리뷰 개수
+SELECT yyww, r.brand, COUNT(*)
+FROM 	(
+			SELECT 	replace(left(review_date, 10), '.', '-') AS "review_date_mod",
+						*
+			FROM "naver_review" AS r
+			LEFT JOIN "naver_order_product" AS n ON (r.product_order_no = n."productOrderId")
+			LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
+			LEFT JOIN "product" AS p ON (o."product_no" = p."no")	
+			WHERE n."productOrderId" IS NOT NULL AND photo_video <> '' AND LENGTH(review) > 299
+		) AS r
+LEFT JOIN "YMD2" AS y ON (r.review_date_mod = y.yymmdd)
+WHERE r.brand = '써큐시안'
+GROUP by y.yyww, r.brand
+Order BY y.yyww desc
+
+
+
+
+
+
+
+SELECT * --DISTINCT product_no
+FROM "naver_review" 
 Order BY review_date
 
 WHERE review_date < '2022-04-01'
 
 
-SELECT r.product_order_no, o."productOrderId"
+SELECT * --r.product_order_no, o."productOrderId"
 FROM "naver_review" AS r
 LEFT JOIN "naver_order_product" AS o ON (r.product_order_no = o."productOrderId")
-WHERE o."productOrderId" IS NULL 
+WHERE o."productOrderId" IS NOT NULL 
 
 
 
@@ -250,6 +359,9 @@ WHERE o."productOrderId" IS NULL
 
 SELECT *
 FROM "naver_review" AS r
+Order BY review_date desc
+
+
 LEFT JOIN "naver_order_product" AS o ON (r.product_order_no = o."productOrderId")
 WHERE o."productOrderId" IS NULL 
 
@@ -257,3 +369,139 @@ WHERE o."productOrderId" IS NULL
 SELECT *
 FROM 
 2021073177737791
+
+
+SELECT SUM(prd_amount_mod)
+FROM "order_batch"
+WHERE store = '쿠팡' AND yymm = '2022-06' AND phytoway = 'y' AND brand = '판토모나'
+
+
+SELECT SUM(order_price)
+FROM "ad_batch"
+WHERE channel = '쿠팡' AND yymm = '2022-06' AND brand = '판토모나'
+
+
+
+SELECT yymm, channel, store, brand, nick, owned_keyword,ad_type,campaign_type,imp_area, SUM(cost)AS cost, SUM(imp_cnt)AS 노출수, SUM(click_cnt) AS 클릭수, SUM(order_cnt) AS 전환수, SUM(order_price) AS 전환매출
+FROM "ad_batch"
+WHERE brand NOT IN ('기타','자사') AND channel='쿠팡'
+GROUP BY yymm,  channel, store, brand, nick, owned_keyword,ad_type,campaign_type,imp_area
+ORDER BY yymm DESC
+
+
+
+
+SELECT * 
+FROM "EZ_Order" 
+WHERE order_id = '20230714-0000058'
+
+
+SELECT *
+FROM "order_batch"
+WHERE store = '자사몰' AND product_qty = 0
+
+
+order_id = '20230714-0000058-01'
+
+
+
+
+SELECT * 
+FROM "naver_order_product"
+WHERE "paymentDate" > '2023-07-23'
+
+
+
+
+
+
+SELECT * --SUM(click_cnt)
+FROM "ad_batch" 
+WHERE channel = '네이버' AND Keyword = '비오틴' AND yymmdd BETWEEN '2023-01-01' AND '2023-06-31'
+11108
+
+
+
+SELECT SUM("K")
+FROM "Naver_Search_Channel"
+WHERE "D" = '비오틴' AND yymmdd BETWEEN '2023-01-01' AND '2023-06-31'
+AND "B" = '검색광고'
+996
+
+
+
+SELECT DISTINCT "B" 
+FROM "Naver_Search_Channel"
+
+
+
+-- 주차별, 상품별 판매수량
+SELECT yyww, onnuri_name, SUM(out_qty)
+FROM "order_batch"
+GROUP BY yyww, onnuri_name
+Order BY yyww desc
+
+
+SELECT * FROM "order_batch" 
+WHERE onnuri_name IS null
+
+LIMIT 1
+
+
+
+SELECT SUM(out_qty)
+FROM "order_batch"
+WHERE store NOT LIKE '%스마트스토어%' AND store <> '쿠팡_제트배송' AND trans_pos_date = '2023-07-12' AND nick = '판토모나하이퍼포머'
+
+
+
+
+
+SELECT onnuri_name, SUM(prd_amount_mod) AS price
+FROM "order_batch"
+WHERE order_date BETWEEN '2023-07-01' AND '2023-07-25' AND phytoway = 'n'
+GROUP BY onnuri_name
+Order BY price desc
+
+
+SELECT SUM(prd_amount_mod) AS price
+FROM "order_batch"
+WHERE order_date BETWEEN '2023-07-01' AND '2023-07-25' AND phytoway = 'n'
+
+
+
+SELECT *
+FROM "order_batch"
+WHERE nick = '판토모나샴푸'
+
+
+
+
+SELECT * 
+FROM "naver_review"
+
+
+
+
+
+
+
+
+
+
+SELECT yymm, yyww, yymmdd, channel, store, brand, nick, owned_keyword,keyword, SUM(imp_cnt)AS 노출수, SUM(click_cnt) AS 클릭수, SUM(order_cnt) AS 전환수, SUM(order_price) AS 전환매출
+FROM "ad_batch"
+WHERE brand NOT IN ('기타','자사') AND yyww >='2023-01' AND yyww <='2023-30'AND channel='네이버'AND campaign_type LIKE '브랜드검색%'
+and keyword='써큐시안에버그린'
+GROUP BY yymm, yyww, yymmdd, channel, store, brand, nick, owned_keyword,keyword
+ORDER BY yymmdd DESC
+
+
+
+
+SELECT * 
+FROM "ad_batch"
+WHERE Keyword='써큐시안에버그린'
+
+
+SELECT * FROM "order_batch" WHERE store = '쿠팡' LIMIT 1000

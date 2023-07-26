@@ -28,7 +28,13 @@ INSERT INTO "content_batch" (yymm, yyww, yymmdd, channel, brand, nick, page_type
 SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price FROM "content_view3"
 
 
-select * from "content_batch" limit 100
+
+-- 중복삽입 검증
+select COUNT(*) from "order_batch"
+
+select COUNT(*) from "ad_batch"
+
+select COUNT(*) from "content_batch"
 
 
 ---------------------------------
@@ -183,6 +189,7 @@ Order BY yyww desc
 -- 3. 월별 매출 합계
 SELECT yymm, SUM(prd_amount_mod) AS price
 FROM "order_batch"
+--WHERE phytoway = 'y'
 GROUP BY yymm
 Order BY yymm DESC
 LIMIT 1000
