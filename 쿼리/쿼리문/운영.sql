@@ -505,3 +505,13 @@ WHERE Keyword='써큐시안에버그린'
 
 
 SELECT * FROM "order_batch" WHERE store = '쿠팡' LIMIT 1000
+
+
+
+
+
+SELECT * FROM "Page_Log" LIMIT 100
+
+
+
+

@@ -314,10 +314,10 @@ Order BY yymm DESC, price DESC
 
 
 
-SELECT store, SUM(prd_amount_mod)
+SELECT yymm, store, SUM(prd_amount_mod)
 FROM "order_batch" 
-WHERE order_date = '2023-07-03'
-GROUP BY store
+--WHERE order_date = '2023-07-03'
+GROUP BY yymm, store
 
 ---------------------------------
 
