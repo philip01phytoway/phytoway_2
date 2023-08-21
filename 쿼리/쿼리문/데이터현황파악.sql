@@ -17,8 +17,8 @@ SELECT yymm, yyww, order_date, order_date_time, key, order_id, order_status, ord
 -- ad_batch
 DELETE FROM "ad_batch"
 
-INSERT INTO "ad_batch" (yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id)
-SELECT yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id FROM "ad_view7"
+INSERT INTO "ad_batch" (yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id, cost_payback)
+SELECT yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id, cost_payback FROM "ad_view7"
 
 
 -- content_batch
@@ -56,7 +56,7 @@ SELECT * FROM "ad_batch" WHERE yymmdd = '2023-06-08'
 SELECT order_date, *
 FROM "EZ_Order"
 Order BY order_date desc
-LIMIT 10000
+LIMIT 1000
 
 
 -- 2. 네이버 주문수집 여부 확인
@@ -124,7 +124,7 @@ WHERE op."option_code" IS NULL
 --AND o."deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
 
 
-
+SELECT * FROM "naver_order_product" WHERE "optionCode" = '8945130586'
 
 
 -- 6. 네이버 매핑 중복 확인
@@ -148,6 +148,10 @@ WHERE op."option" IS NULL
 
 
 -- 8. 쿠팡 매핑 중복 확인
+SELECT c."option", count(*)
+from "coupang_option" AS c
+group BY c."option"
+having count(*) > 1
 
 
 -- 9. 쿠팡 제트배송 매핑 누락 확인
@@ -166,6 +170,7 @@ select * from "coupang_sales" where "option_id" in ('86226494116', '86226494125'
 --  1. 일별 매출 합계
 SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
 FROM "order_batch"
+WHERE phytoway = 'y'
 GROUP BY yymm, yyww, order_date
 Order BY order_date DESC
 LIMIT 1000
@@ -313,10 +318,9 @@ GROUP BY yymm, nick
 Order BY yymm DESC, price DESC
 
 
-
+-- 9. 스토어별 월매출
 SELECT yymm, store, SUM(prd_amount_mod)
 FROM "order_batch" 
---WHERE order_date = '2023-07-03'
 GROUP BY yymm, store
 
 ---------------------------------
@@ -324,12 +328,6 @@ GROUP BY yymm, store
 -- 광고
 
 ---------------------------------
-
--- 
-select * from "ad_batch" WHERE yymmdd = '2023-06-01'
-
-channel IS null
-
 
 
 
@@ -379,6 +377,23 @@ Order BY yymm DESC, cost DESC
 -- 내가 평균의 함정에 빠진건가? cpc가 어느 구간에선 높을 수가 있나?
 -- 키워드가 -인건 뭐지? : 쇼검
 -- 제품별 효율도 봐야겠네.
+
+
+----------------
+
+-- 콘텐츠
+
+-----------------
+
+SELECT * FROM "content_batch"
+
+
+
+
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+
 
 
 SELECT *

@@ -51,7 +51,7 @@ events = [event]
 event_request = EventRequest(
     events=events,
     pixel_id=pixel_id,
-    test_event_code='TEST7399',
+    test_event_code='TEST84097',
 )
 
 event_response = event_request.execute()

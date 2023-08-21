@@ -26,7 +26,7 @@ SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-25'
 -- 네이버광고
 SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-14'
 
-SELECT * FROM "AD_Naver" WHERE reg_date = '2023-07-11'
+SELECT DISTINCT reg_date FROM "AD_Naver" WHERE reg_date > '2023-08-09'
 
 
 SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
@@ -56,7 +56,7 @@ SELECT * FROM "AD_CoupangBrand" Order BY reg_date DESC LIMIT 10000
 SELECT * FROM "ad_google3" Order BY reg_date DESC
 
 
-SELECT * FROM "ad_google3" WHERE reg_date BETWEEN '2023-07-28' AND '2023-07-30'
+SELECT * FROM "ad_google3" WHERE reg_date = '2023-08-09'
 
 
 -- 구글 광고 매핑 누락 확인
@@ -179,10 +179,29 @@ LEFT JOIN "ad_mapping3" AS m ON (c.product2_id = m.product2_id)
 WHERE m.product2_id IS NULL AND C.product2_id <> '0'
 
 -- 구글 광고 매핑 누락 확인
-SELECT * 
+SELECT *
 FROM "ad_google3" AS g
 LEFT JOIN "ad_mapping3" AS m ON (g.adgroup_id = m.adgroup_id)
 WHERE m.adgroup_id IS NULL 
+
+
+SELECT *
+FROM "ad_batch"
+WHERE channel IS null
+
+
+SELECT *
+FROM "ad_mapping3"
+WHERE adgroup_id = '152383000000'
+
+
+
+
+AND g.campaign not LIKE '%google%'
+Order BY g.campaign
+
+
+ AND g.campaign LIKE '%써큐시안%'
 
 
 
@@ -1510,7 +1529,7 @@ from	(	select	order_date, product,
 						from "customer7"															
 					) t																
 			group by order_date, product, rank																		
-		) t1 left join																			
+		) t1 left JOIN																			
 		"YMD2" as y on (t1.order_date = y.yymmdd)																			
 where t1.order_date < '2024-12-31' AND Product IS NOT null																					
 order by t1.order_date desc, product ASC, rank ASC																					
@@ -1531,3 +1550,22 @@ Order BY yymmdd desc, channel, store, Product, owned_keyword_type
 SELECT *
 FROM "Query_Log2"
 WHERE query_date = '45049'
+
+
+-- 7월 총 출고수량 중에서
+-- 일반배송, 네이버 풀필먼트, 쿠팡 제트배송 출고수량 비중
+-- 새로운 삽지가 나올건데 일반배송건에 삽지를 넣고 그 효율을 보려고
+-- 삽지는 리뷰 유도 위한 천만원 삽지
+
+
+
+SELECT store, SUM(out_qty) AS out_qty
+FROM "order_batch" 
+WHERE yymm = '2023-07' AND phytoway = 'y' AND store NOT IN ('메디크로스랩')
+GROUP BY store
+Order BY out_qty desc
+
+
+
+
+
