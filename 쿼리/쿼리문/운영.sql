@@ -910,74 +910,6 @@ WHERE channel IS NULL
 
 
 
--- 2. 쿠팡
--- 쿠팡 상품광고
--- 자상호 기준 변경
-SELECT 	y.yymm, y.yyww, y.yymmdd, '쿠팡' AS Channel, '쿠팡' AS store, p.brand, p.nick, 
-			c.account, '상품광고' AS "ad_type", c."ad_type" AS "campaign_type", C."adspace" AS imp_area,
-			c.campaign, c.ad_group, '' AS creative,
-			
-		 	CASE
-		 		WHEN REPLACE(c.keyword, ' ', '') LIKE '트리플' AND REPLACE(c.keyword, ' ', '') NOT LIKE'마그네슘' THEN '비자상호'
-			    WHEN REPLACE(c.keyword, ' ', '') LIKE '%' || p.brand || '%' AND c.keyword <> '' THEN '자상호'
-			    WHEN REPLACE(c.keyword, ' ', '') LIKE '파이토웨이' THEN '자상호'
-			    WHEN REPLACE(c.keyword, ' ', '') LIKE '하이퍼포머' THEN '자상호'
-			    WHEN REPLACE(c.keyword, ' ', '') LIKE '플러스맥스' THEN '자상호'
-			    WHEN REPLACE(c.keyword, ' ', '') LIKE '블러드케어' THEN '자상호'
-			    WHEN REPLACE(c.keyword, ' ', '') LIKE '에버그린' THEN '자상호'
-			    WHEN REPLACE(c.keyword, ' ', '') LIKE '트리플마그네슘' THEN '자상호'
-			    
-			    ELSE '비자상호'
-			END AS owned_keyword, c.keyword, 
-			
-			c.adcost AS cost, c.impressions AS imp_cnt, c.clicks AS click_cnt, c.order_cnt, c.gross AS order_price, C."Z" AS order_cnt_14, c."AF" AS order_price_14, c.product2_id, c.adcost AS "cost_payback"
-FROM "AD_Coupang" AS c
-LEFT JOIN (SELECT * FROM "ad_mapping3" WHERE channel_no = 5) AS m ON (m.product2_id = c.product2_id)
-LEFT JOIN "product" AS p ON (m.product_no = p.no)
-LEFT JOIN "YMD2" AS y ON (y.yymmdd = c.reg_date)
-
-
-
-
-
-
-
-
--- 쿠팡 브랜드광고
--- 자상호 기준 변경
-SELECT y.yymm, y.yyww, y.yymmdd, '쿠팡' AS Channel, '쿠팡' AS store,
-
- 		CASE
-         WHEN (cb.product2_id <> '0') THEN p.brand
-         ELSE '파이토웨이'
-     END AS brand,
-     
-     CASE
-         WHEN ((cb.product2_id) <> '0') THEN p.nick
-         ELSE '파이토웨이'
-     END AS nick,
-     
-     cb.account, '브랜드광고' AS "ad_type", "template_type" AS campaign_type, impressions_type AS imp_area, 
-     cb.campaign, cb.ad_group, cb."source" AS creative, 
-     
-   CASE
-   	 WHEN REPLACE(cb.impression_keyword, ' ', '') LIKE '%트리플%' AND REPLACE(cb.impression_keyword, ' ', '') NOT LIKE '%마그네슘%' THEN '비자상호'
-	    WHEN REPLACE(cb.impression_keyword, ' ', '') LIKE '%' || p.brand || '%' THEN '자상호'
-	    WHEN REPLACE(cb.impression_keyword, ' ', '') LIKE '%파이토웨이%' THEN '자상호'
-	    WHEN REPLACE(cb.impression_keyword, ' ', '') LIKE '%하이퍼포머%' THEN '자상호'
-	    WHEN REPLACE(cb.impression_keyword, ' ', '') LIKE '%플러스맥스%' THEN '자상호'
-	    WHEN REPLACE(cb.impression_keyword, ' ', '') LIKE '%블러드케어%' THEN '자상호'
-	    WHEN REPLACE(cb.impression_keyword, ' ', '') LIKE '%에버그린%' THEN '자상호'
-	    WHEN REPLACE(cb.impression_keyword, ' ', '') LIKE '%트리플마그네슘%' THEN '자상호'
-		 ELSE '비자상호'
-	END AS owned_keyword, cb.impression_keyword AS keyword,
- 	cb.adcost AS cost, cb.impressions AS imp_cnt, cb.clicks AS click_cnt, cb.order_cnt, cb.gross AS order_price, cb."AO" AS order_cnt_14, cb."AU" AS order_price_14, cb.product2_id, cb.adcost AS "cost_payback"
-FROM "AD_CoupangBrand" AS cb         
-LEFT JOIN (SELECT * FROM "ad_mapping3" WHERE channel_no = 5) AS m ON (m.product2_id::text = cb.product2_id::text)
-LEFT JOIN "product" AS p ON (m.product_no = p.no)
-LEFT JOIN "YMD2" y ON (cb.reg_date::text = y.yymmdd::TEXT)
-
-
 
 
 
@@ -988,7 +920,7 @@ LEFT JOIN "YMD2" y ON (cb.reg_date::text = y.yymmdd::TEXT)
 
 SELECT *
 FROM "ad_mapping3"
-WHERE channel_no = 2
+WHERE channel_no = 4
 
 
 
@@ -999,8 +931,340 @@ Order BY no
 
 
 SELECT *
+FROM "Product"
+Order BY id
+
+
+
+
+SELECT *
 FROM "store"
 Order BY no
+
+
+
+SELECT *
+FROM "Page_Log"
+
+
+
+SELECT *
+FROM "Naver_Custom_Order" AS n
+
+LEFT JOIN (
+
+
+
+SELECT id::TEXT, product_id
+FROM "Page"
+
+
+) AS p ON (n.nt_medium = p.id)
+
+
+WHERE nt_source = 'contents' AND p.product_id = 2
+
+
+
+
+
+SELECT SUM(cost) AS cost, SUM(imp_cnt) AS imp_cnt, SUM(click_cnt) AS click_cnt, SUM(order_cnt) AS order_cnt, SUM(order_price) AS order_price
+FROM "ad_batch" 
+
+
+
+SELECT * FROM "ad_batch" 
+WHERE campaign_type = '신제품광고' LIMIT 1
+
+
+SELECT * FROM "ad_naver_nosp" LIMIT 1
+
+
+
+SELECT * FROM "Page" WHERE page_url IS NOT NULL AND page_url <> ''
+
+
+
+SELECT * FROM "keyword_occ"
+
+SELECT * FROM "cac_gfa"
+
+
+
+-- 뷰 검색 row 단위.
+-- 뷰 검색 대시보드 형태로 필요함.
+SELECT t.reg_date, '네이버' AS channel, pd.brand, pd.nick, k.main_keyword, k.sub_keyword, t.search_keyword, t.post_type, t.post_writer, t.post_date, t.title, t."text", t.url, t.rank, t.file_path
+FROM (
+			SELECT 	
+						dense_rank() over(partition BY reg_date, search_keyword Order BY rank) AS occ_rank,						  (regexp_matches(split_part(url, '?', 1), '[^/]+$'))[1] as url_key,
+						*
+			FROM "naver_view_occ"
+			--WHERE post_type <> '광고'
+			--Order BY search_keyword, occ_rank
+) AS t
+LEFT JOIN "keyword_occ" AS k ON (t.keyword_no = k.keyword_no)
+LEFT JOIN (SELECT *, (regexp_matches(split_part(page_url, '?', 1), '[^/]+$'))[1] as url_key FROM "Page") AS p ON (t.url_key = p.url_key)
+LEFT JOIN "product" AS pd ON (k.product_no = pd.no)
+--WHERE post_type NOT IN ('카페', '포스트') AND occ_rank <= 5 AND p.url_key IS NOT NULL 
+
+
+
+
+
+-- 뷰검색 기존 구글시트 양식
+SELECT *
+FROM (
+
+SELECT t.reg_date, k.sub_keyword_novoid, t.url_key, MIN(t.rank) AS rank
+FROM (
+			SELECT 	
+						dense_rank() over(partition BY reg_date, search_keyword Order BY rank) AS occ_rank,						  (regexp_matches(split_part(url, '?', 1), '[^/]+$'))[1] as url_key,
+						*
+			FROM "naver_view_occ"
+			WHERE post_type <> '광고'
+			--Order BY search_keyword, occ_rank
+) AS t
+LEFT JOIN "keyword_occ" AS k ON (t.keyword_no = k.keyword_no)
+LEFT JOIN (SELECT *, (regexp_matches(split_part(page_url, '?', 1), '[^/]+$'))[1] as url_key FROM "Page") AS p ON (t.url_key = p.url_key)
+LEFT JOIN "product" AS pd ON (k.product_no = pd.no)
+WHERE post_type NOT IN ('카페', '포스트') AND occ_rank <= 5 AND p.url_key IS NOT NULL 
+AND t.reg_date >= '2023-08-29'
+GROUP BY t.reg_date, k.sub_keyword_novoid, t.url_key
+Order BY t.reg_date desc
+
+) AS occ
+WHERE reg_date = '2023-08-29'
+
+
+
+SELECT * FROM "Page"
+
+
+
+SELECT *
+FROM "naver_inte_occ"
+LIMIT 100
+
+
+
+
+SELECT *
+FROM (
+
+SELECT t.reg_date, k.sub_keyword_novoid, t.url_key, t.search_keyword, MIN(t.rank) AS rank
+
+SELECT * 
+FROM (
+			SELECT 	
+						dense_rank() over(partition BY reg_date, search_keyword Order BY rank) AS occ_rank,						  (regexp_matches(split_part(url, '?', 1), '[^/]+$'))[1] as url_key,
+						*
+			FROM "naver_view_occ"
+			WHERE post_type <> '광고'
+			--Order BY search_keyword, occ_rank
+) AS t
+LEFT JOIN "keyword_occ" AS k ON (t.keyword_no = k.keyword_no)
+LEFT JOIN (SELECT *, (regexp_matches(split_part(page_url, '?', 1), '[^/]+$'))[1] as url_key FROM "Page") AS p ON (t.url_key = p.url_key)
+LEFT JOIN "product" AS pd ON (k.product_no = pd.no)
+WHERE --post_type NOT IN ('카페', '포스트') --AND occ_rank <= 5 AND p.url_key IS NOT NULL 
+ k.keyword_no IS NULL AND t.reg_date = '2023-08-29'
+
+
+SELECT *
+FROM "naver_view_occ"
+WHERE reg_date = '2023-08-29' AND keyword_no NOT IN (SELECT keyword_no FROM "keyword_occ")
+
+
+
+
+GROUP BY t.reg_date, k.sub_keyword_novoid, t.url_key, t.search_keyword
+Order BY reg_date desc
+
+) AS occ
+WHERE reg_date = '2023-08-29'
+
+
+
+SELECT *
+FROM "naver_occ_view"
+WHERE reg_date = '2023-08-29'
+
+
+SELECT DISTINCT post_date
+
+SELECT *
+FROM "naver_view_occ"
+LIMIT 10
+
+
+SELECT *
+FROM "keyword_occ"
+WHERE sub_keyword_novoid IS NULL 
+
+
+IN (
+
+SELECT sub_keyword_novoid
+FROM "keyword_occ"
+GROUP BY sub_keyword_novoid
+HAVING COUNT(*) > 1
+)
+
+
+WHERE sub_keyword_novoid = '판토모나샴푸'
+
+
+
+SELECT yymm, SUM(cost1)
+FROM "content_batch"
+WHERE page_type = '블로그'
+GROUP BY yymm
+Order BY yymm desc
+
+
+
+SELECT *
+FROM "naver_occ_view"
+
+
+
+
+
+
+SELECT *
+FROM "ad_mapping3"
+WHERE channel_no = 1
+
+
+SELECT y.yymm, "D", SUM("E") AS cust, SUM("G") AS pay, SUM("G") / SUM("E") AS conv
+FROM "Naver_Search_Channel" AS n
+LEFT JOIN "YMD2" AS y ON (n.yymmdd = y.yymmdd)
+WHERE "D" = '판토모나'
+GROUP BY y.yymm, "D"
+Order BY y.yymm DESC
+LIMIT 100
+
+
+
+SELECT * FROM "product" Order BY no
+
+
+
+
+SELECT *
+FROM "naver_inte_occ"
+WHERE imp_area LIKE '%HOWTO%' 
+
+
+
+
+SELECT * FROM "ad_ga_aw" LIMIT 1
+
+
+
+SELECT DISTINCT product_no
+FROM "keyword_occ"
+WHERE sub_keyword LIKE '%페미론큐%'
+
+
+
+
+
+SELECT DISTINCT product_no, main_keyword --, sub_keyword
+FROM "keyword_occ"
+WHERE main_keyword = '비오틴'
+
+
+
+SELECT *
+FROM "keyword_occ"
+Order BY keyword_no
+
+LIMIT 1
+
+
+SELECT *
+FROM "keyword_occ"
+WHERE imp_area = '' and sub_keyword_novoid NOT IN (
+SELECT sub_keyword_novoid
+FROM "keyword_occ"
+WHERE imp_area = '통합'
+)
+
+
+
+
+SELECT *
+FROM "keyword_occ"
+WHERE imp_area = '통합' and sub_keyword_novoid NOT IN (
+
+SELECT sub_keyword_novoid
+FROM "keyword_occ"
+GROUP BY sub_keyword_novoid
+HAVING COUNT(*) > 1
+
+)
+
+
+
+SELECT *
+FROM "keyword_occ"
+WHERE sub_keyword_novoid = '콜레스테롤낮추는영양제'
+
+
+
+SELECT * FROM "naver_view_occ" AS n
+LEFT JOIN "keyword_occ" AS k ON (n.keyword_no = k.keyword_no)
+LIMIT 1000
+
+
+
+
+
+SELECT * FROM "Page" LIMIT 10
+
+
+SELECT nick, sum(out_qty)
+FROM "order_batch"
+WHERE trans_date BETWEEN '2023-08-01' AND '2023-08-29'
+GROUP BY nick
+
+
+-- 제트배송에서 1개입과 3개입이 각각 몇개씩 출고되는지 일자별로
+
+SELECT * 
+FROM "coupang_sales" AS s
+LEFT JOIN "coupang_option" AS o ON (s.option_id = o.option)
+LEFT JOIN 
+WHERE sales_type = '로켓그로스'
+GROUP BY 
+
+
+ LIMIT 10
+
+
+-- 내가 옛날에 만든게 쿠팡 제트배송 재고도 실시간으로 알려준다고 한다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT * FROM "ad_batch"
+WHERE brand IS null
+
+
+
+
 
 
 

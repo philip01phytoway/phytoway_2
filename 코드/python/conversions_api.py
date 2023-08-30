@@ -16,17 +16,17 @@ pixel_id = '1481300945957522'
 FacebookAdsApi.init(access_token=access_token)
 
 user_data = UserData(
-    emails=['joe@eg.com'],
-    phones=['12345678901', '14251234567'],
+    emails=['philip@phytoway.com'],
+    phones=['654982365', '23165498561'],
     # It is recommended to send Client IP and User Agent for Conversions API Events.
     # client_ip_address=request.META.get('REMOTE_ADDR'),
     # client_user_agent=request.headers['User-Agent'],
     fbc='fb.1.1554763741205.AbCdEfGhIjKlMnOpQrStUvWxYz1234567890',
-    fbp='fb.1.1558571054389.1098115397',
+    fbp='fb.1.1692668947595.877322391',
 )
 
 content = Content(
-    product_id='product123',
+    product_id='fb.1.1692668947595.877322391',
     quantity=1,
     delivery_category=DeliveryCategory.HOME_DELIVERY,
 )
@@ -51,7 +51,7 @@ events = [event]
 event_request = EventRequest(
     events=events,
     pixel_id=pixel_id,
-    test_event_code='TEST84097',
+    test_event_code='TEST36146',
 )
 
 event_response = event_request.execute()

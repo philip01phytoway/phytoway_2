@@ -64,8 +64,8 @@ SELECT 	"paymentDate", *
 FROM 		"naver_order_product" AS n
 LEFT JOIN "naver_option" AS o ON (n."optionCode" = o."option_code")
 LEFT JOIN "product" AS p ON (o."product_no" = p."no")
-WHERE 	"paymentDate" IS NOT NULL 
-Order BY "paymentDate" DESC
+WHERE 	"paymentDate" IS NOT NULL
+ORDER BY "paymentDate" DESC
 LIMIT 1000
 
 
@@ -168,11 +168,11 @@ select * from "coupang_sales" where "option_id" in ('86226494116', '86226494125'
 
 
 --  1. 일별 매출 합계
-SELECT yymm, yyww, order_date, SUM(prd_amount_mod) AS price
+SELECT yymm, yyww, order_date, store, SUM(prd_amount_mod) AS price
 FROM "order_batch"
 WHERE phytoway = 'y'
-GROUP BY yymm, yyww, order_date
-Order BY order_date DESC
+GROUP BY yymm, yyww, order_date, store
+Order BY order_date DESC, price desc
 LIMIT 1000
 
 

@@ -1,5 +1,5 @@
-
--- 1. 네이버
+-- 네이버
+-- 1-1. 네이버 검색광고
 SELECT 	y.yymm, y.yyww, y.yymmdd, c.name AS channel, s.name AS store,        
 			
 			CASE 
@@ -37,10 +37,16 @@ LEFT JOIN "YMD2" AS y ON (a.reg_date = y.yymmdd)
 UNION ALL 
 
 
--- 1-n. 네이버 GFA
+-- 1-2. 네이버 GFA
 SELECT yymm,	yyww,	yymmdd,	Channel,	store,	brand,	nick,	account,	ad_type,	campaign_type,	imp_area,	campaign,	adgroup,	creative,	owned_keyword,	Keyword,	cost,	imp_cnt,	click_cnt,	order_cnt,	order_price,	0 as order_cnt_14,	0 as order_price_14,	'' as option_id, cost * 0.955 as	cost_payback
 FROM "cac_gfa"
 
+
+UNION ALL 
+
+-- 1-3. 네이버 신제품광고
+SELECT *, cost AS cost_payback 
+FROM "ad_naver_nosp"
 
 UNION ALL
 
