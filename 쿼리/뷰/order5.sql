@@ -732,7 +732,7 @@ LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 WHERE 
 		(
 				(
-					o.shop_id IN (10087, 10286, 10387, 10096) 
+					o.shop_id IN (10087, 10286, 10387, 10096, 10486) 
 				)
 			OR
 				(
@@ -807,7 +807,7 @@ WHERE o.shop_name NOT IN ('스토어팜(파이토웨이)', '쿠팡')
 
 ) AS t
 LEFT JOIN "YMD2" AS y ON (t.order_date = y.yymmdd)
-WHERE order_id <> '' AND phytoway = 'y'
+WHERE order_id <> '' AND phytoway = 'y' AND order_name <> '남궁은석' AND order_tel <> '01053986449'
 
 ) AS t2
 
@@ -1536,7 +1536,7 @@ LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 WHERE 
 		(
 				(
-					o.shop_id IN (10087, 10286, 10387, 10096) 
+					o.shop_id IN (10087, 10286, 10387, 10096, 10486) 
 				)
 			OR
 				(
@@ -2238,7 +2238,7 @@ LEFT JOIN "store" AS s ON (o.shop_id = s.ez_store_code)
 WHERE 
 		(
 				(
-					o.shop_id IN (10087, 10286, 10387, 10096) 
+					o.shop_id IN (10087, 10286, 10387, 10096, 10486) 
 				)
 			OR
 				(
@@ -2313,7 +2313,7 @@ WHERE o.shop_name NOT IN ('스토어팜(파이토웨이)', '쿠팡')
 
 ) AS t
 LEFT JOIN "YMD2" AS y ON (t.order_date = y.yymmdd)
-WHERE order_id = ''
+WHERE order_id = '' AND order_name <> '남궁은석' AND order_tel <> '01053986449'
 
 ) AS t2
 

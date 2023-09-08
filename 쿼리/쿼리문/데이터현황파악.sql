@@ -8,21 +8,21 @@
 ---------------------------------
 
 -- order_batch
-DELETE FROM "order_batch"
+TRUNCATE TABLE "order_batch"
 
 INSERT INTO "order_batch" (yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type, inflow_path, dead_date, onnuri_code, onnuri_name, onnuri_type, trans_date, prev_dead_date, next_dead_date, prev_order_date, next_order_date)
 SELECT yymm, yyww, order_date, order_date_time, key, order_id, order_status, order_name, cust_id, order_tel, recv_name, recv_tel, recv_zip, recv_address, store, phytoway, brand, nick, product_qty, order_qty, out_qty, order_cnt, prd_amount_mod, prd_supply_price, term, decide_date, all_cust_type, brand_cust_type, inflow_path, dead_date, onnuri_code, onnuri_name, onnuri_type, trans_date, prev_dead_date, next_dead_date, prev_order_date, next_order_date FROM "order5"
 
 
 -- ad_batch
-DELETE FROM "ad_batch"
+TRUNCATE TABLE "ad_batch"
 
 INSERT INTO "ad_batch" (yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id, cost_payback)
 SELECT yymm, yyww, yymmdd, channel, store, brand, nick, account, ad_type, campaign_type, imp_area, campaign, adgroup, creative, owned_keyword, keyword, cost, imp_cnt, click_cnt, order_cnt, order_price, order_cnt_14, order_price_14, option_id, cost_payback FROM "ad_view7"
 
 
 -- content_batch
-DELETE FROM "content_batch"
+TRUNCATE TABLE "content_batch"
 
 INSERT INTO "content_batch" (yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price)
 SELECT yymm, yyww, yymmdd, channel, brand, nick, page_type, id, keyword, owned_keyword_type, cost1, cost2, pv, cc, cc2, inflow_cnt, order_cnt, order_price FROM "content_view3"
@@ -123,8 +123,8 @@ LEFT JOIN "naver_option" AS op ON (o."optionCode" = op."option_code")
 WHERE op."option_code" IS NULL 
 --AND o."deliveryAttributeType" = 'ARRIVAL_GUARANTEE'
 
-
-SELECT * FROM "naver_order_product" WHERE "optionCode" = '8945130586'
+-- 써큐시안 추가구성 상품 (선물박스 + 쇼핑백) 일단은 무시. 나중에 값 커지면 그때 수정
+SELECT * FROM "naver_order_product" WHERE "optionCode" = '2317196683'
 
 
 -- 6. 네이버 매핑 중복 확인
@@ -209,7 +209,7 @@ LIMIT 1000
 
 
 -- 5. 월별 신규주문건수, 재구매주문건수, 신규고객수, 재구매고객수, 신규매출, 재구매매출 합계
-SELECT 	yymm,
+SELECT 	yyww, 
 
 			SUM(CASE 
 					WHEN all_cust_type = '신규' THEN order_cnt
@@ -241,10 +241,10 @@ SELECT 	yymm,
 					ELSE 0
 				END) AS "재구매매출"
 				
-FROM "order_batch"
-WHERE order_cnt = 0
-GROUP BY yymm
-ORDER BY yymm DESC
+FROM "order5"
+WHERE phytoway = 'y'
+GROUP BY yyww
+ORDER BY yyww DESC
 
 
 -- 6. 일별 신규주문건수, 재구매주문건수, 신규고객수, 재구매고객수, 신규매출, 재구매매출 합계
@@ -322,7 +322,7 @@ Order BY yymm DESC, price DESC
 SELECT yymm, store, SUM(prd_amount_mod)
 FROM "order_batch" 
 GROUP BY yymm, store
-
+Order BY yymm desc
 ---------------------------------
 
 -- 광고

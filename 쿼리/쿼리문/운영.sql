@@ -1265,6 +1265,53 @@ WHERE brand IS null
 
 
 
+SELECT * FROM "ad_batch"
+WHERE campaign = '파워컨텐츠_은행잎바나바'
+
+
+SELECT * FROM "ad_mapping3" WHERE campaign LIKE '%바나바%'
+
+
+
+SELECT yyww, campaign, SUM(order_cnt) AS order_cnt
+FROM "ad_batch"
+WHERE Channel = '네이버'
+GROUP BY yyww, campaign
+Order BY yyww desc, campaign 
+
+
+SELECT *
+FROM "ad_batch"
+where campaign = 'BR_판토모나'
+
+
+SELECT * FROM "product" Order BY no
+
+SELECT * FROM "order_batch" WHERE order_id = '2023083026576711'
+
+
+
+
+
+-- 네이버 검색채널에서 잠재고객 번호 제외하고
+-- 일자별 키워드별 결제수, 결제금액 쿼리
+SELECT yymmdd, keyword, SUM("I") AS order_cnt, SUM("K") AS order_price
+FROM 	(
+			SELECT 	*,
+						SPLIT_PART("D", '_', 1) AS keyword
+			FROM "Naver_Search_Channel"
+			WHERE yymmdd > '2023-09-01'
+			AND "D" LIKE '%\_%' ESCAPE '\'
+		) AS t			
+GROUP BY yymmdd, keyword
+
+
+SELECT * FROM "AD_Naver" LIMIT 100
+
+
+
+
+
 
 
 

@@ -20,6 +20,9 @@ SELECT SUM(customer_cnt), SUM(inflow_cnt), sum(page_cnt), SUM(order_cnt), SUM(or
 -- 검색채널
 SELECT * FROM "Naver_Search_Channel" Order by yymmdd DESC LIMIT 1000
 
+
+
+
 SELECT * FROM "Naver_Search_Channel" WHERE yymmdd = '2023-04-25'
 
 
@@ -29,7 +32,10 @@ SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-14'
 SELECT DISTINCT reg_date FROM "AD_Naver" WHERE reg_date > '2023-08-09'
 
 
-SELECT * FROM "AD_Naver" WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
+SELECT * FROM "AD_Naver" Order BY reg_date DESC LIMIT 10000
+
+
+WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
 
 -- 재고
 SELECT * FROM "Stock" Order BY yymmdd DESC
@@ -143,6 +149,8 @@ SELECT DISTINCT "B", "D"
 FROM "AD_Naver"
 WHERE "D" NOT IN (SELECT DISTINCT adgroup FROM "ad_mapping3" WHERE channel_no = 1)
 AND reg_date >= '2023-10-01'
+
+
 
 WITH naver_mapping AS (
 		SELECT DISTINCT id, "B", "D", reg_date
