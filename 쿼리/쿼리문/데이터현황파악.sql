@@ -39,7 +39,7 @@ select COUNT(*) from "content_batch"
 
 ---------------------------------
 
--- 주문
+-- 프로세스 개선 : 데이터 검증
 
 ---------------------------------
 
@@ -49,8 +49,8 @@ select COUNT(*) from "content_batch"
 -- 주요 데이터 파악
 
 
-SELECT * FROM "ad_batch" WHERE yymmdd = '2023-06-08'
 
+---- 주문
 
 -- 1. 이지어드민 주문수집 여부 확인
 SELECT order_date, *
@@ -146,6 +146,8 @@ FROM "coupang_order" AS o,
 LEFT JOIN "coupang_option" AS op ON (p."vendorItemId" = op."option")
 WHERE op."option" IS NULL 
 
+-- 쿠팡 올데이 매핑 위하여 coupang_option_combined 필요함.
+-- 혹은 설계의 변경이 필요함.
 
 -- 8. 쿠팡 매핑 중복 확인
 SELECT c."option", count(*)
@@ -165,6 +167,119 @@ select * from "order_batch" where store = '쿠팡_제트배송' and nick = '페�
 
 select * from "coupang_sales" where "option_id" in ('86226494116', '86226494125')
 
+
+
+---- 광고
+
+
+-- 1-1. 네이버 검색광고 매핑 누락 확인
+WITH naver_mapping AS (
+		SELECT DISTINCT id, "B", "D", reg_date
+		FROM "AD_Naver" AS a
+		LEFT JOIN "ad_mapping3" AS m ON (a."B" = m.campaign AND a."D" = m.adgroup)
+		WHERE m.campaign IS NULL OR m.adgroup IS NULL
+		Order BY reg_date DESC
+		--LIMIT 100
+)
+
+SELECT DISTINCT id, "B", "D"
+FROM "naver_mapping"
+
+
+-- 1-2. 네이버 검색광고 매핑 중복 확인
+SELECT campaign, adgroup, COUNT(*)
+FROM "ad_mapping3" 
+WHERE channel_no = 1
+GROUP BY campaign, adgroup
+HAVING COUNT(*) > 1
+
+
+
+-- 2-1. 쿠팡 상품광고 매핑 누락 확인
+SELECT DISTINCT ad_account, c.product2, c.product2_id 
+FROM "AD_Coupang" AS c 
+LEFT JOIN "ad_mapping3" AS m ON (c.product2_id = m.product2_id) 
+WHERE m.product2_id IS NULL
+
+
+
+-- 2-2. 쿠팡 브랜드광고 매핑 누락 확인
+SELECT DISTINCT C.product2, C.product2_id
+FROM "AD_CoupangBrand" AS c
+LEFT JOIN "ad_mapping3" AS m ON (c.product2_id = m.product2_id)
+WHERE m.product2_id IS NULL AND C.product2_id <> '0'
+
+
+
+-- 2-3. 쿠팡 광고 매핑 중복 확인
+SELECT *
+FROM "ad_mapping3"
+WHERE product2_id IN (
+
+SELECT product2_id
+FROM "ad_mapping3"
+WHERE channel_no = 5
+GROUP BY product2_id
+HAVING COUNT(*) > 1
+
+)
+
+Order BY product2_id
+
+
+-- 3-1. 구글 광고 매핑 누락 확인
+SELECT *
+FROM "ad_google3" AS g
+LEFT JOIN "ad_mapping3" AS m ON (g.adgroup_id = m.adgroup_id)
+WHERE m.adgroup_id IS NULL 
+
+
+-- 3-2. 구글 광고 매핑 중복 확인
+
+SELECT *
+FROM "ad_mapping3"
+WHERE adgroup_id IN (
+
+SELECT adgroup_id
+FROM "ad_mapping3"
+WHERE channel_no = 2
+GROUP BY adgroup_id
+HAVING COUNT(*) > 1
+
+)
+
+Order BY adgroup_id
+
+
+-- 4-1. 메타 매핑 누락 확인
+SELECT DISTINCT campaign, adgroup, ad
+FROM (
+			SELECT 	yymm, yyww, yymmdd, c.name AS channel, s.name AS store, p.nick, ad.campaign, ad.adgroup, ad.ad,
+						SUM(adcost) AS adcost, SUM(impression) AS impression, SUM(click) AS click
+			FROM "ad_meta" AS ad
+			LEFT JOIN "ad_mapping3" AS m ON (ad.campaign = m.campaign AND ad.adgroup = m.adgroup AND ad.ad = m.ad)
+			LEFT JOIN "YMD2" AS y ON (ad.reg_date = y.yymmdd)
+			LEFT JOIN "product" AS p ON (m.product_no = p.no)
+			LEFT JOIN "store" AS s ON (m.store_no = s.no)
+			LEFT JOIN "channel" AS c ON (m.channel_no = c.no)
+			WHERE adcost > 0
+			GROUP BY yymm, yyww, yymmdd, c.name, s.name, p.nick, ad.campaign, ad.adgroup, ad.ad
+			HAVING p.nick IS null
+			Order BY yymm DESC, yyww desc, yymmdd desc, c.name, s.name, p.nick, ad.campaign, ad.adgroup, ad.ad
+) AS t
+
+
+
+-- 4-2. 메타 광고 매핑 중복 확인
+
+SELECT campaign, adgroup, ad
+FROM "ad_mapping3"
+WHERE channel_no = 4
+GROUP BY campaign, adgroup, ad
+HAVING COUNT(*) > 1
+
+
+-- 주요 데이터 현황 파악
 
 
 --  1. 일별 매출 합계

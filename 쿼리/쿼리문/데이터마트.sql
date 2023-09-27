@@ -156,7 +156,7 @@ WITH naver_mapping AS (
 		SELECT DISTINCT id, "B", "D", reg_date
 		FROM "AD_Naver" AS a
 		LEFT JOIN "ad_mapping3" AS m ON (a."B" = m.campaign AND a."D" = m.adgroup)
-		WHERE m.campaign IS NULL OR m.adgroup IS NULL -- AND reg_date >= '2023-03-01'
+		WHERE m.campaign IS NULL OR m.adgroup IS NULL
 		Order BY reg_date DESC
 		--LIMIT 100
 )
