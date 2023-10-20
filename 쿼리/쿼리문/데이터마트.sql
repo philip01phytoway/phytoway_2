@@ -32,7 +32,7 @@ SELECT DISTINCT id FROM "AD_Naver" WHERE reg_date = '2023-05-14'
 SELECT DISTINCT reg_date FROM "AD_Naver" WHERE reg_date > '2023-08-09'
 
 
-SELECT * FROM "AD_Naver" Order BY reg_date DESC LIMIT 10000
+SELECT * FROM "AD_Naver" Order BY reg_date DESC LIMIT 1000
 
 
 WHERE reg_date = '2023-04-25' AND id = 'zero2one2'
@@ -79,7 +79,8 @@ SELECT * FROM "ad_ga_utm" Order BY reg_date DESC
 매핑 누락 확인 필요
 
 -- 메타 광고
-SELECT * FROM "ad_meta" Order BY reg_date DESC
+SELECT * FROM "ad_meta" 
+Order BY reg_date DESC
 
 
 -- ADN 광고
