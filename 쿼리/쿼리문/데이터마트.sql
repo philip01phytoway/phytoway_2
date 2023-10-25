@@ -62,7 +62,7 @@ SELECT * FROM "AD_CoupangBrand" Order BY reg_date DESC LIMIT 10000
 SELECT * FROM "ad_google3" Order BY reg_date DESC
 
 
-SELECT * FROM "ad_google3" WHERE reg_date = '2023-08-09'
+SELECT * FROM "ad_google3" WHERE account = 'phytoway'
 
 
 -- 구글 광고 매핑 누락 확인
